@@ -259,8 +259,12 @@ ASSIGNMENTOP:'='
   |ASSRSHIFT
 ;
 OPERATION:OPERATION OPERATOR OPERATION 
-  {sprintf($$.op,"%s%s%s",$1.op,$2,$3.op);$$.preop=strdup($1.preop);strcat($$.preop,$3.preop);
-  $$.postop=strdup($1.postop);strcat($$.postop,$3.postop);}
+{$$.op=malloc(strlen($1.op)+strlen($2)+strlen($3.op));
+  sprintf($$.op,"%s%s%s",$1.op,$2,$3.op);
+  $$.preop=malloc(strlen($1.preop)+strlen($3.preop));
+  sprintf($$.preop,"%s%s",$1.preop,$3.preop);
+  $$.postop=malloc(strlen($1.postop)+strlen($3.postop));
+  sprintf($$.postop,"%s%s",$1.postop,$3.postop);}
   |'('OPERATION')'
   |NOT OPERATION {$$.op=strdup("not ");strcat($$.op,$2.op);$$.preop=strdup($2.preop);$$.postop=strdup($2.postop);}
   |VALUE         {$$.op=strdup($1);$$.postop="";$$.preop="";}
@@ -364,6 +368,10 @@ BASICTYPE:INT
 ;
 
 %%
+
+op_type *op_concat(){
+  
+}
 void yyerror(const char *s) {
   char *c=s;
   //sprintf(c,"%s at line %d .\n",s,line);

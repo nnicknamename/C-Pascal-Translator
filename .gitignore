@@ -1,0 +1,5 @@
+*.out
+*.o
+*.code-workspace
+*.xml
+*.html
