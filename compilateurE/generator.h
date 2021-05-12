@@ -1,1 +1,1 @@
-void generateError(char *error);
+void generateError(char *error,char lang);

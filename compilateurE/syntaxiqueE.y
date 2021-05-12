@@ -168,10 +168,17 @@ void printError(int line,char* unexpected,char* expecting){
 void yyerror(const char *s) {
   printf("%s.\n",s);
 }
-void generateError(char *error){
-  YY_BUFFER_STATE buffer = zz_scan_string(error);
-  yyparse();
-  zz_delete_buffer(buffer);
+void generateError(char *error,char lang){
+  switch(lang){
+    case 'e':
+      printf("%s\n",error);
+    break;
+    case 'f':{
+      YY_BUFFER_STATE buffer = zz_scan_string(error);
+      yyparse();
+      zz_delete_buffer(buffer);}
+    break;
+  }
 }
 /*int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");

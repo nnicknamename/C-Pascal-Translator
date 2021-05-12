@@ -10,6 +10,7 @@
     extern int yyparse();
     extern int line;
     extern FILE *yyin;
+    char lang;
     FILE *out;
 
 %}
@@ -54,7 +55,8 @@
 %left ADD MINUS
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR OPERATION LVALUE STAR NAME VALUE
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE
+%type <op_type> OPERATION
 %union{
   struct{
     int nb_short;
@@ -63,6 +65,11 @@
     char* c_type;
     char* p_type;
   }t_catch;
+  struct {
+    char* preop;
+    char* op;
+    char* postop;
+  }op_type;
   char *code;
 }
 %start CODE
@@ -233,7 +240,7 @@ GLOBALOPERATION:GLOBALOPERATION OPERATOR GLOBALOPERATION
 ;
 
 DEFINITION:DEFINITION ',' DEFINITION 
-  |OPERATION {fprintf(out,"%s\n",$1);}
+  |OPERATION {fprintf(out,"%s \n %s \n %s \n",$1.preop,$1.op,$1.postop);}
   |ASSIGNMENT 
 ;
 
@@ -251,21 +258,24 @@ ASSIGNMENTOP:'='
   |ASSLSHIFT 
   |ASSRSHIFT
 ;
-OPERATION:OPERATION OPERATOR OPERATION {$$=strdup($1);strcat($$,$2);strcat($$,$3);}
+OPERATION:OPERATION OPERATOR OPERATION 
+  {sprintf($$.op,"%s%s%s",$1.op,$2,$3.op);$$.preop=strdup($1.preop);strcat($$.preop,$3.preop);
+  $$.postop=strdup($1.postop);strcat($$.postop,$3.postop);}
   |'('OPERATION')'
-  |NOT OPERATION  {$$=strdup("not ");strcat($$,$2);}
-  /*|OPERATION PF  {$$=strdup($1);strcat($$,$2);}*/
-  |VALUE         {$$=strdup($1);}
-  |NAME          {$$=$1;}
-  |INCR LVALUE   {fprintf(out,"%s = %s + 1 ;\n",$2,$2);$$=strdup($2);}
-  |DECR LVALUE   {fprintf(out,"%s = %s - 1 ;\n",$2,$2);$$=strdup($2);}                      
+  |NOT OPERATION {$$.op=strdup("not ");strcat($$.op,$2.op);$$.preop=strdup($2.preop);$$.postop=strdup($2.postop);}
+  |VALUE         {$$.op=strdup($1);$$.postop="";$$.preop="";}
+  |NAME          {$$.op=strdup($1);$$.postop="";$$.preop="";}
+  |INCR LVALUE   {sprintf($$.preop,"%s = %s + 1",$2,$2);$$.op=strdup($2);$$.postop="";}
+  |DECR LVALUE   {sprintf($$.preop,"%s = %s - 1",$2,$2);$$.op=strdup($2);$$.postop="";}  
+  |LVALUE INCR   {$$.postop=strdup($1);strcat($$.postop," = 1 + ");strcat($$.postop,$1);$$.op=strdup($1);$$.preop="";}
+  |LVALUE DECR   {$$.postop=strdup($1);strcat($$.postop," = 1 - ");strcat($$.postop,$1);$$.op=strdup($1);$$.preop="";}                      
   |SIZEOFDEF
 ;
 NAME:RVALUE
   |LVALUE {$$=strdup($1);}
 ;
 
-RVALUE:BAND ID
+RVALUE:BAND IDS
   |IDS '(' DEFINITION ')'
   |IDS '('')'
 ;
@@ -363,18 +373,25 @@ void yyerror(const char *s) {
   strcat(c,str);
   strcat(c," .");
   //printf("%s\n",c);
-  generateError(c);
+  generateError(c,lang);
 }
 
 int main(int argc, char *argv[]) {
-  FILE *myfile = fopen(argv[1], "r");
-  out = fopen(argv[2], "w+");
+  FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
+
+  out = fopen(argv[2], "w+");//ficher du resultat de la traduction
+  if(!strcmp(argv[3],"en")){
+      lang='e';
+  }else{
+    if(!strcmp(argv[3],"fr")){
+      lang='f';
+    }
+  }
   if (!myfile) {
     printf("file not found");
     return -1;
   }
   yyin = myfile;
-
   yyparse();
   return 0;
 }
