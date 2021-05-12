@@ -1,0 +1,1 @@
+void generateError(char *error);

@@ -1,0 +1,2 @@
+syntax error, unexpected BOR, expecting VALSTR or VALINT or VALREAL or VALCHAR  at line 31 .
+syntax error, unexpected ID at line 25 .

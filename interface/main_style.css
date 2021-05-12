@@ -1,0 +1,32 @@
+/*
+#616e7c
+#52606d
+#3e4c59
+#323f4b
+#1f2933
+*/
+.menu{
+  -fx-mid-text-color:#b1b1b1;
+  -fx-background-color: #3e4c59;
+}
+
+.tool_bar{
+  -fx-background-color: #323f4b;
+
+}
+.background {
+  -fx-background-color:#1f2933;
+}
+.split-pane-divider {
+  -fx-padding: 0 2 0 2 ;
+  -fx-background-color:#323f4b;
+  -fx-background-insets: 0;
+}
+.text-area{
+  -fx-background-color:#1f2933;
+  -fx-border-color:#1f2933;
+  -fx-control-inner-background:#1f2933;
+}
+.button{
+
+}
