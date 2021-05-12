@@ -2,7 +2,7 @@
     #include <stdlib.h>
     #include <stdio.h>
     #include <string.h>
-    #include "compilateurE/generator.h"
+    #include "compilateurE/generator.h"  
     #include "type_comparator.h"
     #define YYERROR_VERBOSE
     void yyerror(const char *s);
