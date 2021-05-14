@@ -22,7 +22,7 @@
 %token DEFINE INCLUDE AUTO STRUCT DOUBLE INT LONG SHORT CHAR FLOAT
 %token CONST SIGNED SIZEOF TYPEDEF RETURN VOID STATIC UNSIGNED
 %token ENUM EXTERN  REGISTER UNION VOLATILE WHILE DO FOR IF
-%token ELSE SWITCH CASE BREAK DEFAULT GOTO CONTINUE
+%token <code>ELSE SWITCH CASE BREAK DEFAULT GOTO CONTINUE
 
 /*Values*/
 %token <code>VALINT VALREAL VALCHAR VALSTR ID
@@ -59,7 +59,7 @@
 %left ADD MINUS
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE GOTODEF LABEL
 %type <op_type> OPERATION
 %union{
   struct{
@@ -367,22 +367,42 @@ BASICTYPE:INT
 
 %%
 
-char * ASSOP(int value, char ASSIGNMENTOP){
-// return := Lvalue op
-// res=strdup(":=") strcat(res,value) strcat(res,op)
+char * ASSOP(char * lvalue, int  ASSIGNMENTOP){
 char* res;
   switch(ASSIGNMENTOP){
-    case '=' :       res=strdup(":=");  break;
-    case ASSADD :    res=strdup(":="); strcat(res,value); strcat(res,"+");   break;
-    case ASSMINUS :  res=strdup(":="); strcat(res,value); strcat(res,"-");   break;   
-    case ASSMULT :   res=strdup(":="); strcat(res,value); strcat(res,"*");   break;   
-    case ASSDIVIDE : res=strdup(":="); strcat(res,value); strcat(res,"/");   break;   
-    case ASSMOD :    res=strdup(":="); strcat(res,value); strcat(res,"mod"); break; 
-    case ASSBAND :   res=strdup(":="); strcat(res,value); strcat(res,"&");   break; 
-    case ASSBOR :    res=strdup(":="); strcat(res,value); strcat(res,"|");   break;   
-    case ASSBXOR :   res=strdup(":="); strcat(res,value); strcat(res,"^");   break;   
-    case ASSLSHIFT : res=strdup(":="); strcat(res,value); strcat(res,"<<");  break;   
-    case ASSRSHIFT : res=strdup(":="): strcat(res,value); strcat(res,">>");  break;   
+    case '=' :       
+      res=strdup(":=");  
+    break;
+    case ASSADD :    
+      res=concat(3,":= ",lvalue,"+ ");
+    break;
+    case ASSMINUS : 
+      res=concat(3,":= ",lvalue,"- ");   
+    break;   
+    case ASSMULT :  
+      res=concat(3,":= ",lvalue,"* ");   
+    break;   
+    case ASSDIVIDE : 
+      res=concat(3,":= ",lvalue,"/ ");  
+    break;   
+    case ASSMOD :    
+      res=concat(3,":= ",lvalue,"mod "); 
+    break; 
+    case ASSBAND :   
+      res=concat(3,":= ",lvalue,"& ");   
+    break; 
+    case ASSBOR :    
+      res=concat(3,":= ",lvalue,"| ");   
+    break;   
+    case ASSBXOR :   
+      res=concat(3,":= ",lvalue,"^ ");   
+    break;   
+    case ASSLSHIFT : 
+      res=concat(3,":= ",lvalue,"<< ");  
+    break;   
+    case ASSRSHIFT : 
+      res=concat(3,":= ",lvalue,">> ");  
+    break;   
   }
   return res;
 }
