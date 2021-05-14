@@ -288,8 +288,8 @@ IDS:ID'.'IDS
   |ID
 ;
 
-STAR:MULT STAR {$$=concat("*",$2);}
-  |MULT   {$$="*";}
+STAR:MULT STAR {$$=concat(2,"^",$2);}
+  |MULT   {$$="^";}
 ;
 
 OPERATOR:ARITHMETIC {$$=$1;}
