@@ -367,6 +367,26 @@ BASICTYPE:INT
 
 %%
 
+char * ASSOP(int value, char ASSIGNMENTOP){
+// return := Lvalue op
+// res=strdup(":=") strcat(res,value) strcat(res,op)
+char* res;
+  switch(ASSIGNMENTOP){
+    case '=' :       res=strdup(":=");  break;
+    case ASSADD :    res=strdup(":="); strcat(res,value); strcat(res,"+");   break;
+    case ASSMINUS :  res=strdup(":="); strcat(res,value); strcat(res,"-");   break;   
+    case ASSMULT :   res=strdup(":="); strcat(res,value); strcat(res,"*");   break;   
+    case ASSDIVIDE : res=strdup(":="); strcat(res,value); strcat(res,"/");   break;   
+    case ASSMOD :    res=strdup(":="); strcat(res,value); strcat(res,"mod"); break; 
+    case ASSBAND :   res=strdup(":="); strcat(res,value); strcat(res,"&");   break; 
+    case ASSBOR :    res=strdup(":="); strcat(res,value); strcat(res,"|");   break;   
+    case ASSBXOR :   res=strdup(":="); strcat(res,value); strcat(res,"^");   break;   
+    case ASSLSHIFT : res=strdup(":="); strcat(res,value); strcat(res,"<<");  break;   
+    case ASSRSHIFT : res=strdup(":="): strcat(res,value); strcat(res,">>");  break;   
+  }
+  return res;
+}
+
 char* concat(int len,const char * args,...){
   va_list valist;
   va_list valist2;
