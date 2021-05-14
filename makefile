@@ -1,5 +1,5 @@
 comp: syntaxique.tab.c lex.yy.c compilateurE/libErr.a
-	gcc syntaxique.tab.c  lex.yy.c -LcompilateurE  -lErr -lfl -o comp
+	gcc  syntaxique.tab.c  lex.yy.c -LcompilateurE  -lErr -lfl -o comp
 	
 syntaxique.tab.c: syntaxique.y compilateurE/generator.h type_comparator.h
 	bison -d -x syntaxique.y 

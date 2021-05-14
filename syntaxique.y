@@ -2,14 +2,18 @@
     #include <stdlib.h>
     #include <stdio.h>
     #include <string.h>
+    #include <stdarg.h>
     #include "compilateurE/generator.h"   
     #include "type_comparator.h"
     #define YYERROR_VERBOSE
+
+  char* concat(int len,const char * args,...);
     void yyerror(const char *s);
     extern int yylex();
     extern int yyparse();
     extern int line;
     extern FILE *yyin;
+    char *r="qsdsdf";
     char lang;
     FILE *out;
 
@@ -117,9 +121,9 @@ DEFINES:'#' DEFINE ID VALUE
 FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL'}'
 ;
 
-LVALUE:STAR LVALUE {$$=strdup($1);strcat($$,$2);}
+LVALUE:STAR LVALUE {$$=concat(2,$1,$2);}
   |ID {$$=strdup($1);}
-  |ID'['OPERATION']'
+  |ID'['OPERATION']' 
 ;
 
 ARGS:
@@ -258,21 +262,15 @@ ASSIGNMENTOP:'='
   |ASSLSHIFT 
   |ASSRSHIFT
 ;
-OPERATION:OPERATION OPERATOR OPERATION 
-{$$.op=malloc(strlen($1.op)+strlen($2)+strlen($3.op));
-  sprintf($$.op,"%s%s%s",$1.op,$2,$3.op);
-  $$.preop=malloc(strlen($1.preop)+strlen($3.preop));
-  sprintf($$.preop,"%s%s",$1.preop,$3.preop);
-  $$.postop=malloc(strlen($1.postop)+strlen($3.postop));
-  sprintf($$.postop,"%s%s",$1.postop,$3.postop);}
+OPERATION:OPERATION OPERATOR OPERATION {$$.op=concat(3,$1.op,$2,$3.op);}
   |'('OPERATION')'
-  |NOT OPERATION {$$.op=strdup("not ");strcat($$.op,$2.op);$$.preop=strdup($2.preop);$$.postop=strdup($2.postop);}
+  |NOT OPERATION {$$.op=concat(2,"not ",$2.op);$$.preop=strdup($2.preop);$$.postop=strdup($2.postop);}
   |VALUE         {$$.op=strdup($1);$$.postop="";$$.preop="";}
   |NAME          {$$.op=strdup($1);$$.postop="";$$.preop="";}
   |INCR LVALUE   {sprintf($$.preop,"%s = %s + 1",$2,$2);$$.op=strdup($2);$$.postop="";}
   |DECR LVALUE   {sprintf($$.preop,"%s = %s - 1",$2,$2);$$.op=strdup($2);$$.postop="";}  
-  |LVALUE INCR   {$$.postop=strdup($1);strcat($$.postop," = 1 + ");strcat($$.postop,$1);$$.op=strdup($1);$$.preop="";}
-  |LVALUE DECR   {$$.postop=strdup($1);strcat($$.postop," = 1 - ");strcat($$.postop,$1);$$.op=strdup($1);$$.preop="";}                      
+  |LVALUE INCR   {$$.postop=concat(3,$1," = 1 +",$1);$$.op=strdup($1);$$.preop="";}
+  |LVALUE DECR   {$$.postop=concat(3,$1," = 1 -",$1);$$.op=strdup($1);$$.preop="";}                      
   |SIZEOFDEF
 ;
 NAME:RVALUE
@@ -290,7 +288,7 @@ IDS:ID'.'IDS
   |ID
 ;
 
-STAR:MULT STAR {$$="*";strcat($$,$2);}
+STAR:MULT STAR {$$=concat("*",$2);}
   |MULT   {$$="*";}
 ;
 
@@ -369,24 +367,39 @@ BASICTYPE:INT
 
 %%
 
-op_type *op_concat(){
-  
+char* concat(int len,const char * args,...){
+  va_list valist;
+  va_list valist2;
+  va_start(valist, args);
+  va_copy(valist2, valist);
+  char *arg=args;
+  int length=0;
+  for(int i=0;i<len;i++){
+    length+=sizeof(*arg);
+    arg=va_arg(valist, char*);
+  };  
+  char *res=malloc(length);
+  va_end(valist);
+  arg=strdup(args);
+  for(int i =0;i<len;i++){
+    strcat(res,arg);
+    arg=va_arg(valist2, char*);
+  };
+  va_end(valist2);
+  return res;
 }
+
 void yyerror(const char *s) {
-  char *c=s;
-  //sprintf(c,"%s at line %d .\n",s,line);
-  strcat(c," at line ");
+  char *c;
   char str[12];
   sprintf(str, "%d", line);
-  strcat(c,str);
-  strcat(c," .");
+  c=concat(4,s," at line ",str," .");
   //printf("%s\n",c);
   generateError(c,lang);
 }
 
 int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
-
   out = fopen(argv[2], "w+");//ficher du resultat de la traduction
   if(!strcmp(argv[3],"en")){
       lang='e';

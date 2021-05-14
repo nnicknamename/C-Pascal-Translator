@@ -127,7 +127,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 60 "syntaxique.y" /* yacc.c:1909  */
+#line 64 "syntaxique.y" /* yacc.c:1909  */
 
   struct{
     int nb_short;
