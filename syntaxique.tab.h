@@ -127,15 +127,13 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 65 "syntaxique.y" /* yacc.c:1909  */
+#line 66 "syntaxique.y" /* yacc.c:1909  */
 
-  struct{
+  struct {
     int nb_short;
     int nb_long;
     int sign;
-    char* c_type;
-    char* p_type;
-  }t_catch;
+  }mod_type;
   struct {
     char* preop;
     char* op;
@@ -144,7 +142,7 @@ union YYSTYPE
   char *code;
   int t_val;
 
-#line 148 "syntaxique.tab.h" /* yacc.c:1909  */
+#line 146 "syntaxique.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

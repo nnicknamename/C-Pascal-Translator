@@ -62,14 +62,13 @@
 %type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE GOTODEF LABEL ASSIGNMENT
 %type <t_val> ASSIGNMENTOP
 %type <op_type> OPERATION
+%type <mod_type> MODIFIER
 %union{
-  struct{
+  struct {
     int nb_short;
     int nb_long;
     int sign;
-    char* c_type;
-    char* p_type;
-  }t_catch;
+  }mod_type;
   struct {
     char* preop;
     char* op;
@@ -217,7 +216,7 @@ DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL
 GLOBALDECLARATION: TYPE GLOBALDEFINITION 
 ;
 
-DECLARATION:TYPE SDEFINITION
+DECLARATION:TYPE SDEFINITION 
 ;
 
 SDEFINITION:SDEFINITION ',' SDEFINITION 
