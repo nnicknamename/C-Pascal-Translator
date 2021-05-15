@@ -6,8 +6,8 @@
     #include "compilateurE/generator.h"   
     #include "type_comparator.h"
     #define YYERROR_VERBOSE
-
-  char* concat(int len,const char * args,...);
+    char * convert_assignment(char * lvalue, int  ASSIGNMENTOP);
+    char* concat(const char * args,...);
     void yyerror(const char *s);
     extern int yylex();
     extern int yyparse();
@@ -59,7 +59,8 @@
 %left ADD MINUS
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE GOTODEF LABEL
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE GOTODEF LABEL ASSIGNMENT
+%type <t_val> ASSIGNMENTOP
 %type <op_type> OPERATION
 %union{
   struct{
@@ -75,6 +76,7 @@
     char* postop;
   }op_type;
   char *code;
+  int t_val;
 }
 %start CODE
 %%
@@ -95,7 +97,7 @@ GLOBAL:INCLUDES
 SIZEOFDEF:SIZEOF '('OPERATION')'
   |SIZEOF '('TYPE')'
 ;
-GOTODEF: GOTO ID {$$=concat(2,$1,$2);}
+GOTODEF: GOTO ID {$$=concat($1,$2,NULL);}
 ;
 ENUMDEF:ENUM ID '{'ENUMARGS'}'
 ;
@@ -109,7 +111,7 @@ ENUMARGS:ENUMARGS ',' ENUMARGS
   |ID
   |ID'='VALUE
 ;
-LABEL: ID ':' {$$=concat(2,$1,":");}
+LABEL: ID ':' {$$=concat($1,":",NULL);}
 ;
 INCLUDES:'#' INCLUDE HEAD
   |'#' INCLUDE VALSTR
@@ -121,13 +123,13 @@ DEFINES:'#' DEFINE ID VALUE
 FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL'}'
 ;
 
-LVALUE:STAR LVALUE {$$=concat(2,$1,$2);}
+LVALUE:STAR LVALUE {$$=concat($1,$2,NULL);}
   |ID {$$=strdup($1);}
-  |ID'['OPERATION']' 
+  |ID'['OPERATION']'{$$=concat("[",$3.op,"]",NULL);}
 ;
 
 ARGS:
-  |TYPE LVALUE ',' ARGS
+  |TYPE LVALUE ',' ARGS 
   |TYPE LVALUE
 ;
 TYPEDEFINITION:TYPEDEF TYPE LVALUE
@@ -248,29 +250,30 @@ DEFINITION:DEFINITION ',' DEFINITION
   |ASSIGNMENT 
 ;
 
-ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION
+ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$=concat($1,convert_assignment($1,$2),$3.op,NULL);}
 ;
-ASSIGNMENTOP:'='
-  |ASSADD 
-  |ASSMINUS 
-  |ASSMULT
-  |ASSDIVIDE
-  |ASSMOD
-  |ASSBAND 
-  |ASSBOR 
-  |ASSBXOR 
-  |ASSLSHIFT 
-  |ASSRSHIFT
-;
-OPERATION:OPERATION OPERATOR OPERATION {$$.op=concat(3,$1.op,$2,$3.op);}
+
+ASSIGNMENTOP:'='  {$$=-1;}
+  |ASSADD         {$$=ASSADD;}
+  |ASSMINUS       {$$=ASSMINUS;}      
+  |ASSMULT        {$$=ASSMULT;}
+  |ASSDIVIDE      {$$=ASSDIVIDE;}
+  |ASSMOD         {$$=ASSMOD;}
+  |ASSBAND        {$$=ASSBAND;}
+  |ASSBOR         {$$=ASSBOR;}
+  |ASSBXOR        {$$=ASSBXOR;}
+  |ASSLSHIFT      {$$=ASSLSHIFT;}
+  |ASSRSHIFT      {$$=ASSRSHIFT;}
+;                                      
+OPERATION:OPERATION OPERATOR OPERATION {$$.op=concat($1.op,$2,$3.op,NULL);}
   |'('OPERATION')'
-  |NOT OPERATION {$$.op=concat(2,"not ",$2.op);$$.preop=strdup($2.preop);$$.postop=strdup($2.postop);}
+  |NOT OPERATION {$$.op=concat("not ",$2.op,NULL);$$.preop=strdup($2.preop);$$.postop=strdup($2.postop);}
   |VALUE         {$$.op=strdup($1);$$.postop="";$$.preop="";}
   |NAME          {$$.op=strdup($1);$$.postop="";$$.preop="";}
-  |INCR LVALUE   {sprintf($$.preop,"%s = %s + 1",$2,$2);$$.op=strdup($2);$$.postop="";}
-  |DECR LVALUE   {sprintf($$.preop,"%s = %s - 1",$2,$2);$$.op=strdup($2);$$.postop="";}  
-  |LVALUE INCR   {$$.postop=concat(3,$1," = 1 +",$1);$$.op=strdup($1);$$.preop="";}
-  |LVALUE DECR   {$$.postop=concat(3,$1," = 1 -",$1);$$.op=strdup($1);$$.preop="";}                      
+  |INCR LVALUE   {sprintf($$.preop,"%s := %s + 1",$2,$2);$$.op=strdup($2);$$.postop="";}
+  |DECR LVALUE   {sprintf($$.preop,"%s := %s - 1",$2,$2);$$.op=strdup($2);$$.postop="";}  
+  |LVALUE INCR   {$$.postop=concat($1," := 1 +",$1,NULL);$$.op=strdup($1);$$.preop="";}
+  |LVALUE DECR   {$$.postop=concat($1," := 1 -",$1,NULL);$$.op=strdup($1);$$.preop="";}                      
   |SIZEOFDEF
 ;
 NAME:RVALUE
@@ -288,7 +291,7 @@ IDS:ID'.'IDS
   |ID
 ;
 
-STAR:MULT STAR {$$=concat(2,"^",$2);}
+STAR:MULT STAR {$$=concat("^",$2,NULL);}
   |MULT   {$$="^";}
 ;
 
@@ -367,61 +370,61 @@ BASICTYPE:INT
 
 %%
 
-char * ASSOP(char * lvalue, int  ASSIGNMENTOP){
+char * convert_assignment(char * lvalue, int  ASSIGNMENTOP){
 char* res;
   switch(ASSIGNMENTOP){
-    case '=' :       
+    case -1 :       
       res=strdup(":=");  
     break;
     case ASSADD :    
-      res=concat(3,":= ",lvalue,"+ ");
+      res=concat(":= ",lvalue,"+ ",NULL);
     break;
     case ASSMINUS : 
-      res=concat(3,":= ",lvalue,"- ");   
+      res=concat(":= ",lvalue,"- ",NULL);   
     break;   
     case ASSMULT :  
-      res=concat(3,":= ",lvalue,"* ");   
+      res=concat(":= ",lvalue,"* ",NULL);   
     break;   
     case ASSDIVIDE : 
-      res=concat(3,":= ",lvalue,"/ ");  
+      res=concat(":= ",lvalue,"/ ",NULL);  
     break;   
     case ASSMOD :    
-      res=concat(3,":= ",lvalue,"mod "); 
+      res=concat(":= ",lvalue,"mod ",NULL); 
     break; 
     case ASSBAND :   
-      res=concat(3,":= ",lvalue,"& ");   
+      res=concat(":= ",lvalue,"& ",NULL);   
     break; 
     case ASSBOR :    
-      res=concat(3,":= ",lvalue,"| ");   
+      res=concat(":= ",lvalue,"| ",NULL);   
     break;   
     case ASSBXOR :   
-      res=concat(3,":= ",lvalue,"^ ");   
+      res=concat(":= ",lvalue,"^ ",NULL);   
     break;   
     case ASSLSHIFT : 
-      res=concat(3,":= ",lvalue,"<< ");  
+      res=concat(":= ",lvalue,"<< ",NULL);  
     break;   
     case ASSRSHIFT : 
-      res=concat(3,":= ",lvalue,">> ");  
+      res=concat(":= ",lvalue,">> ",NULL);  
     break;   
   }
   return res;
 }
 
-char* concat(int len,const char * args,...){
+char* concat(const char * args,...){
   va_list valist;
   va_list valist2;
   va_start(valist, args);
   va_copy(valist2, valist);
   char *arg=args;
   int length=0;
-  for(int i=0;i<len;i++){
+  while(arg!=NULL){
     length+=sizeof(*arg);
     arg=va_arg(valist, char*);
   };  
   char *res=malloc(length);
   va_end(valist);
   arg=strdup(args);
-  for(int i =0;i<len;i++){
+  while(arg!=NULL){
     strcat(res,arg);
     arg=va_arg(valist2, char*);
   };
@@ -433,7 +436,7 @@ void yyerror(const char *s) {
   char *c;
   char str[12];
   sprintf(str, "%d", line);
-  c=concat(4,s," at line ",str," .");
+  c=concat(s," at line ",str," .",NULL);
   //printf("%s\n",c);
   generateError(c,lang);
 }
