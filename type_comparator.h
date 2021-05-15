@@ -21,7 +21,7 @@ const struct t_catch dect[]={
     {0,0,1,"double","double"},      //double
     {0,1,1,"double",""}             //long double 
 };
-char* convert_type(int nb_short,int nb_long,int sign,char* c_type,char* p_type){
+char* convert_type(int nb_short,int nb_long,int sign,char* c_type){
     if(c_type==""){
         c_type="int";
     }
