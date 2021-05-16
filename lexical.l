@@ -1,11 +1,13 @@
 %{
     #include <stdlib.h>
     #include <string.h>
-    #include "semantic.h"  
+    #include "semantic_types.h"  
+    #include "id_checker.h"
     #include "syntaxique.tab.h"
     int numberLines(char* str);
     int line=1;
     int errorNum=0;
+    id_list *id_table=NULL;
 %}
 nl          "\n" 
 id          [a-zA-Z_][a-zA-Z0-9_]*
@@ -53,7 +55,7 @@ real        {digit}+"."{digit}+
 "goto"      {return(GOTO);}
 "continue"  {return(CONTINUE);}
 
-{id}        {yylval.code=(char *)strdup(yytext);return(ID);}
+{id}        {yylval.code=(char *)get_p_id(&id_table,strdup(yytext));return(ID);}
 {string}    {yylval.code=(char *)strdup(yytext);line+=numberLines(yytext);return(VALSTR);}
 {coment}    {line+=numberLines(yytext);}
 {character} {yylval.code=(char *)strdup(yytext);return(VALCHAR);}

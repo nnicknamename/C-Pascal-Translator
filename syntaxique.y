@@ -8,21 +8,21 @@
     #include "type_comparator.h"
     #define YYERROR_VERBOSE
     s_list * insert_s_list(s_list **head,char *operation);
+    char* concat(const char * args,...);
     void print_s_list(s_list *head,char *separator);
-void init_op_type(op_type *opr);
-void chain_s_list(s_list *list1,s_list *list2);
+    void init_op_type(op_type *opr);
+    void chain_s_list(s_list *list1,s_list *list2);
 
     char * convert_assignment(char * lvalue, int  ASSIGNMENTOP);
-    char* concat(const char * args,...);
     void yyerror(const char *s);
 
     extern int yylex();
     extern int yyparse();
     extern int line;
     extern FILE *yyin;
-    char *r="qsdsdf";
+    extern id_list *id_table;
     char lang;
-    FILE *out;
+
 
 %}
 /*KeyWords*/
@@ -66,10 +66,10 @@ void chain_s_list(s_list *list1,s_list *list2);
 %left ADD MINUS
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE GOTODEF LABEL 
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE STAR NAME VALUE GOTODEF LABEL 
 %type <t_val> ASSIGNMENTOP
-%type <op> OPERATION  ASSIGNMENT
-%type <exp> DEFINITION
+%type <op> OPERATION  ASSIGNMENT SASSIGNMENT
+%type <exp> DEFINITION SDEFINITION
 %type <mod_type> MODIFIER
 %union{
   struct {
@@ -224,12 +224,13 @@ GLOBALDECLARATION: TYPE GLOBALDEFINITION
 DECLARATION:TYPE SDEFINITION 
 ;
 
-SDEFINITION:SDEFINITION ',' SDEFINITION 
-  |OPERATION 
-  |SASSIGNMENT 
+SDEFINITION:SDEFINITION ',' SDEFINITION {chain_s_list($1,$3);$$=$1;}
+  |OPERATION {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
+  |SASSIGNMENT {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
 ;
 
-SASSIGNMENT:LVALUE '=' OPERATION
+SASSIGNMENT:LVALUE '=' OPERATION {{$$.op=concat($1,convert_assignment($1,-1),$3.op,NULL);
+$$.preop=$3.preop;$$.postop=$3.postop;}}
 ;
 
 
@@ -271,7 +272,7 @@ ASSIGNMENTOP:'='  {$$=-1;}
   |ASSRSHIFT      {$$=ASSRSHIFT;}
 ;                                      
 OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
-  |'('OPERATION')' {$$=$2;$$.op=concat("(",$2.op,")",NULL);}
+  |'('OPERATION')' {$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
   |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
   |VALUE         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
   |NAME          {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
@@ -379,7 +380,7 @@ char * convert_assignment(char * lvalue, int  ASSIGNMENTOP){
 char* res;
   switch(ASSIGNMENTOP){
     case -1 :       
-      res=strdup(" :=");  
+      res=strdup(" := ");  
     break;
     case ASSADD :    
       res=concat(" := ",lvalue,"+ ",NULL);
@@ -415,6 +416,14 @@ char* res;
   return res;
 }
 
+void yyerror(const char *s) {
+  char *c;
+  char str[12];
+  sprintf(str, "%d", line);
+  c=concat(s," at line ",str," .",NULL);
+  //printf("%s\n",c);
+  generateError(c,lang);
+}
 char* concat(const char * args,...){
   va_list valist;
   va_list valist2;
@@ -436,48 +445,6 @@ char* concat(const char * args,...){
   va_end(valist2);
   return res;
 }
-
-void yyerror(const char *s) {
-  char *c;
-  char str[12];
-  sprintf(str, "%d", line);
-  c=concat(s," at line ",str," .",NULL);
-  //printf("%s\n",c);
-  generateError(c,lang);
-}
-s_list * insert_s_list(s_list **head,char *operation){
-  s_list *res =malloc(sizeof(s_list));
-  res->op=operation;
-  res->next_op=*head;
-  *head=res;
-  return res;
-}
-void print_s_list(s_list *head,char *separator){
-  s_list *temp=head;
-  while(temp!=NULL){
-    if(temp->op!=NULL){
-      fprintf(out,"%s %s",temp->op,separator);
-    }
-    temp=temp->next_op;
-  }
-}
-void chain_s_list(s_list *list1,s_list *list2){
-  if(list1!=NULL){
-    s_list *temp=list1;
-    while(temp->next_op!=NULL){
-      temp=temp->next_op;
-    }
-    temp->next_op=list2;
-  }else{
-    list1=list2;
-  }
-}
-void init_op_type(op_type *opr){
-  opr->preop=malloc(sizeof(s_list));
-  opr->postop=malloc(sizeof(s_list));
-  opr->preop->next_op=NULL;
-  opr->postop->next_op=NULL;
-}
 int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
   out = fopen(argv[2], "w+");//ficher du resultat de la traduction
@@ -494,6 +461,7 @@ int main(int argc, char *argv[]) {
   }
   yyin = myfile;
   yyparse();
+  print_id_list(id_table);
   fclose(myfile);
   fclose(out);
   return 0;

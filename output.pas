@@ -1,4 +1,2 @@
-c := 1 + c ;
-d := 1 + d ;
-a := a+ c + (d) ;
-d :=a + b ;
+test1 := test1+ test2 + test ;
+test2 ;

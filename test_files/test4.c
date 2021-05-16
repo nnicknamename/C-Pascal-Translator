@@ -1,5 +1,7 @@
 #include<stdio.h>
-int a=5,b=0,c=20,d=10;
+
+int TEST=3,test=0,Test=5;
 int main(){
-    a+=++c+(++d),d=a+b;
+    test+=Test+TEST;
+    Test;
 }
