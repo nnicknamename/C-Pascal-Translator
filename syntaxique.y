@@ -76,6 +76,7 @@
   }op_type;
   char *code;
   int t_val;
+  s_list *exp;
 }
 %start CODE
 %%
