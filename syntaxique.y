@@ -3,12 +3,19 @@
     #include <stdio.h>
     #include <string.h>
     #include <stdarg.h>
+    #include "semantic.h"
     #include "compilateurE/generator.h"   
     #include "type_comparator.h"
     #define YYERROR_VERBOSE
+    s_list * insert_s_list(s_list **head,char *operation);
+    void print_s_list(s_list *head,char *separator);
+void init_op_type(op_type *opr);
+void chain_s_list(s_list *list1,s_list *list2);
+
     char * convert_assignment(char * lvalue, int  ASSIGNMENTOP);
     char* concat(const char * args,...);
     void yyerror(const char *s);
+
     extern int yylex();
     extern int yyparse();
     extern int line;
@@ -59,9 +66,10 @@
 %left ADD MINUS
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE GOTODEF LABEL ASSIGNMENT
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR  LVALUE STAR NAME VALUE GOTODEF LABEL 
 %type <t_val> ASSIGNMENTOP
-%type <op_type> OPERATION
+%type <op> OPERATION  ASSIGNMENT
+%type <exp> DEFINITION
 %type <mod_type> MODIFIER
 %union{
   struct {
@@ -69,11 +77,7 @@
     int nb_long;
     int sign;
   }mod_type;
-  struct {
-    char* preop;
-    char* op;
-    char* postop;
-  }op_type;
+  op_type op;
   char *code;
   int t_val;
   s_list *exp;
@@ -193,7 +197,7 @@ DEFAULT2:DEFAULT ':' LINE
 FORLOOP:FOR '(' EXPRESSION EL EXPRESSION EL EXPRESSION')'CODEBLOCK
 ;
 
-EXPRESSION: DEFINITION  
+EXPRESSION: DEFINITION  {print_s_list($1,";\n");}
   |DECLARATION
 ;
 
@@ -245,12 +249,13 @@ GLOBALOPERATION:GLOBALOPERATION OPERATOR GLOBALOPERATION
   |SIZEOFDEF
 ;
 
-DEFINITION:DEFINITION ',' DEFINITION 
-  |OPERATION {fprintf(out,"%s \n %s \n %s \n",$1.preop,$1.op,$1.postop);}
-  |ASSIGNMENT 
+DEFINITION:DEFINITION ',' DEFINITION {chain_s_list($1,$3);$$=$1;}
+  |OPERATION {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
+  |ASSIGNMENT {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
 ;
 
-ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$=concat($1,convert_assignment($1,$2),$3.op,NULL);}
+ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$.op=concat($1,convert_assignment($1,$2),$3.op,NULL);
+$$.preop=$3.preop;$$.postop=$3.postop;}
 ;
 
 ASSIGNMENTOP:'='  {$$=-1;}
@@ -265,15 +270,15 @@ ASSIGNMENTOP:'='  {$$=-1;}
   |ASSLSHIFT      {$$=ASSLSHIFT;}
   |ASSRSHIFT      {$$=ASSRSHIFT;}
 ;                                      
-OPERATION:OPERATION OPERATOR OPERATION {$$.op=concat($1.op,$2,$3.op,NULL);}
-  |'('OPERATION')'
-  |NOT OPERATION {$$.op=concat("not ",$2.op,NULL);$$.preop=strdup($2.preop);$$.postop=strdup($2.postop);}
-  |VALUE         {$$.op=strdup($1);$$.postop="";$$.preop="";}
-  |NAME          {$$.op=strdup($1);$$.postop="";$$.preop="";}
-  |INCR LVALUE   {sprintf($$.preop,"%s := %s + 1",$2,$2);$$.op=strdup($2);$$.postop="";}
-  |DECR LVALUE   {sprintf($$.preop,"%s := %s - 1",$2,$2);$$.op=strdup($2);$$.postop="";}  
-  |LVALUE INCR   {$$.postop=concat($1," := 1 +",$1,NULL);$$.op=strdup($1);$$.preop="";}
-  |LVALUE DECR   {$$.postop=concat($1," := 1 -",$1,NULL);$$.op=strdup($1);$$.preop="";}                      
+OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
+  |'('OPERATION')' {$$=$2;$$.op=concat("(",$2.op,")",NULL);}
+  |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
+  |VALUE         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
+  |NAME          {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
+  |INCR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 + ",$2,NULL));$$.op=strdup($2);}
+  |DECR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 - ",$2,NULL));$$.op=strdup($2);}  
+  |LVALUE INCR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 + ",$1,NULL));$$.op=strdup($1);}
+  |LVALUE DECR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 - ",$1,NULL));$$.op=strdup($1);}                      
   |SIZEOFDEF
 ;
 NAME:RVALUE
@@ -374,37 +379,37 @@ char * convert_assignment(char * lvalue, int  ASSIGNMENTOP){
 char* res;
   switch(ASSIGNMENTOP){
     case -1 :       
-      res=strdup(":=");  
+      res=strdup(" :=");  
     break;
     case ASSADD :    
-      res=concat(":= ",lvalue,"+ ",NULL);
+      res=concat(" := ",lvalue,"+ ",NULL);
     break;
     case ASSMINUS : 
-      res=concat(":= ",lvalue,"- ",NULL);   
+      res=concat(" := ",lvalue,"- ",NULL);   
     break;   
     case ASSMULT :  
-      res=concat(":= ",lvalue,"* ",NULL);   
+      res=concat(" := ",lvalue,"* ",NULL);   
     break;   
     case ASSDIVIDE : 
-      res=concat(":= ",lvalue,"/ ",NULL);  
+      res=concat(" := ",lvalue,"/ ",NULL);  
     break;   
     case ASSMOD :    
-      res=concat(":= ",lvalue,"mod ",NULL); 
+      res=concat(" := ",lvalue,"mod ",NULL); 
     break; 
     case ASSBAND :   
-      res=concat(":= ",lvalue,"& ",NULL);   
+      res=concat(" := ",lvalue,"& ",NULL);   
     break; 
     case ASSBOR :    
-      res=concat(":= ",lvalue,"| ",NULL);   
+      res=concat(" := ",lvalue,"| ",NULL);   
     break;   
     case ASSBXOR :   
-      res=concat(":= ",lvalue,"^ ",NULL);   
+      res=concat(" := ",lvalue,"^ ",NULL);   
     break;   
     case ASSLSHIFT : 
-      res=concat(":= ",lvalue,"<< ",NULL);  
+      res=concat(" := ",lvalue,"<< ",NULL);  
     break;   
     case ASSRSHIFT : 
-      res=concat(":= ",lvalue,">> ",NULL);  
+      res=concat(" := ",lvalue,">> ",NULL);  
     break;   
   }
   return res;
@@ -440,7 +445,39 @@ void yyerror(const char *s) {
   //printf("%s\n",c);
   generateError(c,lang);
 }
-
+s_list * insert_s_list(s_list **head,char *operation){
+  s_list *res =malloc(sizeof(s_list));
+  res->op=operation;
+  res->next_op=*head;
+  *head=res;
+  return res;
+}
+void print_s_list(s_list *head,char *separator){
+  s_list *temp=head;
+  while(temp!=NULL){
+    if(temp->op!=NULL){
+      fprintf(out,"%s %s",temp->op,separator);
+    }
+    temp=temp->next_op;
+  }
+}
+void chain_s_list(s_list *list1,s_list *list2){
+  if(list1!=NULL){
+    s_list *temp=list1;
+    while(temp->next_op!=NULL){
+      temp=temp->next_op;
+    }
+    temp->next_op=list2;
+  }else{
+    list1=list2;
+  }
+}
+void init_op_type(op_type *opr){
+  opr->preop=malloc(sizeof(s_list));
+  opr->postop=malloc(sizeof(s_list));
+  opr->preop->next_op=NULL;
+  opr->postop->next_op=NULL;
+}
 int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
   out = fopen(argv[2], "w+");//ficher du resultat de la traduction
@@ -457,5 +494,7 @@ int main(int argc, char *argv[]) {
   }
   yyin = myfile;
   yyparse();
+  fclose(myfile);
+  fclose(out);
   return 0;
 }

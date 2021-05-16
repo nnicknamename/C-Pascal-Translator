@@ -1,4 +1,3 @@
-
 typedef  struct t_catch{
     int nb_short;
     int nb_long;

@@ -1,6 +1,7 @@
 %{
     #include <stdlib.h>
     #include <string.h>
+    #include "semantic.h"  
     #include "syntaxique.tab.h"
     int numberLines(char* str);
     int line=1;
