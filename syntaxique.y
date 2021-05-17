@@ -66,11 +66,12 @@
 %left ADD MINUS
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE STAR NAME VALUE GOTODEF LABEL 
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE STAR NAME VALUE GOTODEF LABEL BASICTYPE VISIBILITY
 %type <t_val> ASSIGNMENTOP
 %type <op> OPERATION  ASSIGNMENT SASSIGNMENT
 %type <exp> DEFINITION SDEFINITION
 %type <mod_type> MODIFIER
+%type <t_catch> TYPE
 %union{
   struct {
     int nb_short;
@@ -259,7 +260,7 @@ ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$.op=concat($1,convert_assignment($1,
 $$.preop=$3.preop;$$.postop=$3.postop;}
 ;
 
-ASSIGNMENTOP:'='  {$$=-1;}
+A0SSIGNMENTOP:'='  {$$=-1;}
   |ASSADD         {$$=ASSADD;}
   |ASSMINUS       {$$=ASSMINUS;}      
   |ASSMULT        {$$=ASSMULT;}
@@ -276,6 +277,7 @@ OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,
   |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
   |VALUE         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
   |NAME          {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
+
   |INCR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 + ",$2,NULL));$$.op=strdup($2);}
   |DECR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 - ",$2,NULL));$$.op=strdup($2);}  
   |LVALUE INCR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 + ",$1,NULL));$$.op=strdup($1);}
@@ -340,10 +342,10 @@ VALUE:VALINT {$$=strdup($1);}
   |VALSTR    {$$=strdup($1);} 
 ;
 
-TYPE:VISIBILITY TYPE
-  |MODIFIER  TYPE
-  |C TYPE
-  |BASICTYPE  B
+TYPE:VISIBILITY TYPE {$$.nb_long=$2.nb_long;$$.nb_short=$2.nb_short;}
+  |MODIFIER  TYPE     {$$.nb_long=$2.nb_long+$2.nb_long;$$.nb_short=$2.nb_short+$2.nb_short;$$.sing=$2.sign;}
+  |C TYPE             {$$.nb_long=$2.nb_long+$2.nb_long;$$.nb_short=$2.nb_short+$2.nb_short;$$.sing=$2.sign;}
+  |BASICTYPE  B       {$$.c_type=$1;$$.=$2; }
 ;
 C:VOLATILE 
   |CONST
@@ -354,23 +356,23 @@ B:VISIBILITY  B
   |
 ;
 
-MODIFIER:SHORT
-  |LONG
-  |SIGNED
-  |UNSIGNED
+MODIFIER:SHORT {$$.nb_short=1;$$.nb_long=0;}
+  |LONG         {$$.nb_long=1$$.nb_short=0;}
+  |SIGNED       {$$.sign= 1;}
+  |UNSIGNED     {$$.sign= 0;}
 ;
 
-VISIBILITY:AUTO
-  |REGISTER
-  |STATIC
-  |EXTERN
+VISIBILITY:AUTO {$$="auto";}
+  |REGISTER     {$$="auto";}
+  |STATIC       {$$="auto";}
+  |EXTERN       {$$="auto";}
 ;
 
-BASICTYPE:INT 
-  |DOUBLE
-  |FLOAT
-  |CHAR
-  |VOID 
+BASICTYPE:INT   {$$ ="int";}
+  |DOUBLE       {$$ ="double";}
+  |FLOAT        {$$ ="float";}
+  |CHAR         {$$ ="char";}
+  |VOID         {$$ ="void";}
   |          
 ;
 
@@ -443,6 +445,7 @@ char* concat(const char * args,...){
     arg=va_arg(valist2, char*);
   };
   va_end(valist2);
+
   return res;
 }
 int main(int argc, char *argv[]) {
@@ -461,7 +464,7 @@ int main(int argc, char *argv[]) {
   }
   yyin = myfile;
   yyparse();
-  print_id_list(id_table);
+  //print_id_list(id_table);
   fclose(myfile);
   fclose(out);
   return 0;

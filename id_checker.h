@@ -28,11 +28,9 @@ id_list * insert_id_list(id_list **head,char *in_c,char *in_p,int conf){
 }
 id_list * find_confusion(id_list *head,char * in_c){
     id_list *temp =head;
-    printf("%s ",in_c);
     in_c=lower_case(in_c);
     while(temp!=NULL){
         if(strcmp(in_c,temp->in_p)==0){
-            printf("conf! %s\n",temp->in_p);
             return temp;
         }
         temp=temp->next_id;

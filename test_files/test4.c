@@ -1,7 +1,8 @@
 #include<stdio.h>
-
-int TEST=3,test=0,Test=5;
+int a=4,b,c;
 int main(){
-    test+=Test+TEST;
-    Test;
+int test=0,TEST=5,Test=6;
+    test+=TEST-Test
+    MAIN;
+    
 }
