@@ -66,17 +66,18 @@
 %left ADD MINUS
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE STAR NAME VALUE GOTODEF LABEL 
+
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE STAR NAME VALUE GOTODEF LABEL BASICTYPE
 %type <t_val> ASSIGNMENTOP
 %type <op> OPERATION  ASSIGNMENT SASSIGNMENT
 %type <exp> DEFINITION SDEFINITION
-%type <mod_type> MODIFIER
+%type <modif> MODIFIER
+%type <vis> VISIBILITY 
+%type <rep> THREE TWO TYPE
 %union{
-  struct {
-    int nb_short;
-    int nb_long;
-    int sign;
-  }mod_type;
+  nb_modif modif;
+  nb_vis vis;
+  type_rep rep;
   op_type op;
   char *code;
   int t_val;
@@ -221,7 +222,7 @@ DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL
 GLOBALDECLARATION: TYPE GLOBALDEFINITION 
 ;
 
-DECLARATION:TYPE SDEFINITION 
+DECLARATION:TYPE SDEFINITION {printf("%s \n",convert_type($1));}
 ;
 
 SDEFINITION:SDEFINITION ',' SDEFINITION {chain_s_list($1,$3);$$=$1;}
@@ -282,24 +283,6 @@ OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,
   |LVALUE DECR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 - ",$1,NULL));$$.op=strdup($1);}                      
   |SIZEOFDEF
 ;
-NAME:RVALUE
-  |LVALUE {$$=strdup($1);}
-;
-
-RVALUE:BAND IDS
-  |IDS '(' DEFINITION ')'
-  |IDS '('')'
-;
-
-
-
-IDS:ID'.'IDS
-  |ID
-;
-
-STAR:MULT STAR {$$=concat("^",$2,NULL);}
-  |MULT   {$$="^";}
-;
 
 OPERATOR:ARITHMETIC {$$=$1;}
   |RELATIONAL       {$$=$1;}
@@ -325,6 +308,24 @@ RELATIONAL:EQUAL    {$$=" = ";}
 LOGICAL:AND         {$$="and";}
   |OR               {$$="or";}
 ;
+NAME:RVALUE
+  |LVALUE {$$=strdup($1);}
+;
+
+RVALUE:BAND IDS
+  |IDS '(' DEFINITION ')'
+  |IDS '('')'
+;
+
+
+
+IDS:ID'.'IDS
+  |ID
+;
+
+STAR:MULT STAR {$$=concat("^",$2,NULL);}
+  |MULT   {$$="^";}
+;
 
 BITWISE:BAND 
   |BOR
@@ -340,38 +341,40 @@ VALUE:VALINT {$$=strdup($1);}
   |VALSTR    {$$=strdup($1);} 
 ;
 
-TYPE:VISIBILITY TYPE
-  |MODIFIER  TYPE
-  |C TYPE
-  |BASICTYPE  B
+TYPE:MODIFIER TWO   {$$=init_type_rep();$$.mod=$1;$$=add_type_rep($$,$2);}
+  |BASICTYPE THREE  {$$=init_type_rep();$$=$2;$$.b_type=strdup($1);}
+  |BASICTYPE        {$$=init_type_rep();$$.b_type=strdup($1);}
+  |MODIFIER         {$$=init_type_rep();$$.mod=$1;}
+  |VISIBILITY TYPE  {$$=init_type_rep();$$.vis=$1;$$=add_type_rep($$,$2);}
 ;
-C:VOLATILE 
-  |CONST
+TWO:MODIFIER TWO    {$$=init_type_rep();$$.mod=$1;$$=add_type_rep($$,$2);}
+  |BASICTYPE THREE  {$$=init_type_rep();$$=$2;$$.b_type=strdup($1);}
+  |BASICTYPE        {$$=init_type_rep();$$.b_type=strdup($1);}
+  |MODIFIER         {$$=init_type_rep();$$.mod=$1;}
+  |VISIBILITY TWO   {$$=init_type_rep();$$.vis=$1;$$=add_type_rep($$,$2);}
 ;
-B:VISIBILITY  B
-  |MODIFIER   B
-  |C          B
-  |
-;
-
-MODIFIER:SHORT
-  |LONG
-  |SIGNED
-  |UNSIGNED
+THREE: MODIFIER THREE {$$=init_type_rep();$$.mod=$1;$$=add_type_rep($$,$2);}
+  |VISIBILITY THREE {$$=init_type_rep();$$.vis=$1;$$=add_type_rep($$,$2);}
+  |MODIFIER         {$$=init_type_rep();$$.mod=$1;}
 ;
 
-VISIBILITY:AUTO
-  |REGISTER
-  |STATIC
-  |EXTERN
+MODIFIER:SHORT  {$$.nb_short=1; $$.nb_long=0;$$.sign=1;}
+  |LONG         {$$.nb_long=1; $$.nb_short=0;$$.sign=1;}
+  |SIGNED       {$$.sign=1;$$.nb_long=0;$$.nb_short=0;}
+  |UNSIGNED     {$$.sign=0;$$.nb_long=0;$$.nb_short=0;}
 ;
 
-BASICTYPE:INT 
-  |DOUBLE
-  |FLOAT
-  |CHAR
-  |VOID 
-  |          
+VISIBILITY:AUTO {$$.nb_auto=1;}
+  |REGISTER     {$$.nb_register=1;}
+  |STATIC       {$$.nb_static=1;}
+  |EXTERN       {$$.nb_extern=1;}
+;
+
+BASICTYPE:INT {$$="int";} 
+  |DOUBLE     {$$="double";}
+  |FLOAT      {$$="float";}
+  |CHAR       {$$="char";}
+  |VOID       {$$="void";}
 ;
 
 %%
@@ -415,7 +418,6 @@ char* res;
   }
   return res;
 }
-
 void yyerror(const char *s) {
   char *c;
   char str[12];
@@ -435,7 +437,7 @@ char* concat(const char * args,...){
     length+=sizeof(*arg);
     arg=va_arg(valist, char*);
   };  
-  char *res=malloc(length);
+  char *res=malloc(length+3);
   va_end(valist);
   arg=strdup(args);
   while(arg!=NULL){
@@ -443,6 +445,7 @@ char* concat(const char * args,...){
     arg=va_arg(valist2, char*);
   };
   va_end(valist2);
+  free(arg);
   return res;
 }
 int main(int argc, char *argv[]) {
@@ -461,7 +464,7 @@ int main(int argc, char *argv[]) {
   }
   yyin = myfile;
   yyparse();
-  print_id_list(id_table);
+  //print_id_list(id_table);
   fclose(myfile);
   fclose(out);
   return 0;

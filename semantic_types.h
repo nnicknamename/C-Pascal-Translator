@@ -1,3 +1,26 @@
+
+  struct nb_modif{
+    int nb_short;
+    int nb_long;
+    int sign;
+  };
+typedef struct nb_modif nb_modif ;
+
+  struct nb_vis{
+    int nb_auto;
+    int nb_register;
+    int nb_static;
+    int nb_extern;
+  };
+typedef struct nb_vis nb_vis ;
+
+struct type_rep{
+    char * b_type;
+    nb_modif mod;
+    nb_vis vis;
+};
+typedef struct type_rep type_rep ;
+
 struct id_list{
     char* in_c;
     char* in_p;
