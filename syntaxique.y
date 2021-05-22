@@ -9,7 +9,7 @@
     #define YYERROR_VERBOSE
     s_list * insert_s_list(s_list **head,char *operation);
     char* concat(const char * args,...);
-    void print_s_list(s_list *head,char *separator);
+    void fprint_s_list(s_list *head,char *separator);
     void init_op_type(op_type *opr);
     void chain_s_list(s_list *list1,s_list *list2);
 
@@ -37,7 +37,7 @@
 /*Arithmetic Operators*/
 %token <code>ADD MINUS MULT DIVIDE MOD INCR DECR
 
-/*Relational Operators*/
+/*Relational Operatoheadrs*/
 %token <code>EQUAL DIF SUP INF SUPEQ INFEQ
 
 /*Logical Operators*/
@@ -67,21 +67,25 @@
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE STAR NAME VALUE GOTODEF LABEL BASICTYPE
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE RVALUE STAR NAME VALUE GOTODEF LABEL BASICTYPE IDS
 %type <t_val> ASSIGNMENTOP
-%type <op> OPERATION  ASSIGNMENT SASSIGNMENT
-%type <exp> DEFINITION SDEFINITION
+%type <op> GLOBALDEFINITION DEFINITION  OPERATION  ASSIGNMENT GLOBALOPERATION GLOBALASSIGNMENT  
 %type <modif> MODIFIER
 %type <vis> VISIBILITY 
 %type <rep> THREE TWO TYPE
+%type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT SDEFINITION EXPRESSION LINE
+%type <loc> LOCAL
 %union{
   nb_modif modif;
   nb_vis vis;
   type_rep rep;
   op_type op;
+  local_type loc;
+  decl_type decl;
   char *code;
   int t_val;
   s_list *exp;
+
 }
 %start CODE
 %%
@@ -125,7 +129,7 @@ INCLUDES:'#' INCLUDE HEAD
 DEFINES:'#' DEFINE ID VALUE
 ;
 
-FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL'}'
+FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprintf(out,"function %s ( ) : %s\n",$2,convert_type($1));fprint_types($7);fprintf(out,"BEGIN\n");fprint_s_list(&$7.ops,";\n");fprintf(out,"END; \n");}
 ;
 
 LVALUE:STAR LVALUE {$$=concat($1,$2,NULL);}
@@ -146,21 +150,24 @@ STRUCTURE: STRUCT ID '{'DECLARATIONSTRUCTURE'}'
 DECLARATIONSTRUCTURE:
   |TYPE X EL DECLARATIONSTRUCTURE
 ;
+
 X:X ',' X
   |LVALUE
   ;
+
+
 LOCAL:
-  |LINE         LOCAL
-  |CODEBLOCK    LOCAL
-  |CONDITIONALS LOCAL
-  |WHILELOOP    LOCAL
-  |DOWHILE      LOCAL
-  |FORLOOP      LOCAL
-  |SWITCHCOND   LOCAL
+  |LOCAL LINE{concat_locals(&$1,$2);$$=$1;}
+  |LOCAL CODEBLOCK     
+  |LOCAL CONDITIONALS 
+  |LOCAL WHILELOOP    
+  |LOCAL DOWHILE      
+  |LOCAL FORLOOP      
+  |LOCAL SWITCHCOND   
 ;
 
-LINE:EXPRESSION EL
-  |RETURN EXPRESSION EL
+LINE:EXPRESSION EL {$$=$1;}  
+  |RETURN EXPRESSION EL 
   |BREAK EL
   |STRUCTURE EL
   |TYPEDEFINITION EL
@@ -198,11 +205,11 @@ DEFAULT2:DEFAULT ':' LINE
 FORLOOP:FOR '(' EXPRESSION EL EXPRESSION EL EXPRESSION')'CODEBLOCK
 ;
 
-EXPRESSION: DEFINITION  {print_s_list($1,";\n");}
-  |DECLARATION
+EXPRESSION: DEFINITION  {$$.ops=$1;$$.type="";$$.ids=NULL;}
+  |DECLARATION {$$=$1;}
 ;
 
-CODEBLOCK:  '{' LOCAL '}'
+CODEBLOCK:  '{' LOCAL '}' 
 ;
 
 CONDITIONALS:IF '(' DEFINITION ')' CONDCODE
@@ -213,47 +220,45 @@ CONDCODE:CODEBLOCK
   |LINE
 ;
 
-WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE
+WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE 
 ;
 
 DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL
 ;
 
-GLOBALDECLARATION: TYPE GLOBALDEFINITION 
+GLOBALDECLARATION: TYPE GLOBALDEFINITION  {$$.type=convert_type($1); $$.ops=$2;}
 ;
 
-DECLARATION:TYPE SDEFINITION {printf("%s \n",convert_type($1));}
+DECLARATION:TYPE SDEFINITION {$$=$2;$$.type=convert_type($1);}
 ;
 
-SDEFINITION:SDEFINITION ',' SDEFINITION {chain_s_list($1,$3);$$=$1;}
-  |OPERATION {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
-  |SASSIGNMENT {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
+SDEFINITION:SDEFINITION ',' SDEFINITION {init_op_type(&$$.ops);$$.ops.op=$3.ops.op;insert_s_list(&$1.ops.preop,$1.ops.op);chain_s_list($$.ops.preop,$1.ops.preop);chain_s_list($$.ops.preop,$1.ops.postop);chain_s_list($$.ops.preop,$3.ops.preop);chain_s_list($$.ops.postop,$3.ops.postop);$$.ids=$1.ids;chain_s_list($$.ids,$3.ids);}
+  |SASSIGNMENT {$$=$1;}
+  |LVALUE {init_op_type(&$$.ops);$$.ops.op=strdup($1);$$.ops.postop=NULL;$$.ids=insert_s_list(&$$.ids,$1);}
 ;
 
-SASSIGNMENT:LVALUE '=' OPERATION {{$$.op=concat($1,convert_assignment($1,-1),$3.op,NULL);
-$$.preop=$3.preop;$$.postop=$3.postop;}}
+SASSIGNMENT:LVALUE '=' OPERATION {$$.ops.op=concat($1,convert_assignment($1,-1),$3.op,NULL);
+$$.ops.preop=$3.preop;$$.ops.postop=$3.postop;$$.ids=insert_s_list(&$$.ids,$1);}
 ;
 
-
-GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION
-  |GLOBALASSIGNMENT
-  |LVALUE
-  |LVALUE'['VALINT']'
+GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION {init_op_type(&$$);$$.op=concat($1.op,",",$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
+  |GLOBALASSIGNMENT {$$=$1;}
+  |LVALUE {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
 ;
 
-GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION
+GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION {$$.op=concat($1," =: ",$3.op,NULL);$$.preop=$3.preop;$$.postop=$3.postop;}
 ;
 
-GLOBALOPERATION:GLOBALOPERATION OPERATOR GLOBALOPERATION
-  |'('GLOBALOPERATION')'
-  |ID
-  |VALUE
+GLOBALOPERATION:GLOBALOPERATION OPERATOR GLOBALOPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
+  |'('GLOBALOPERATION')' {$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
+  |ID         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
+  |VALUE      {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
   |SIZEOFDEF
 ;
 
-DEFINITION:DEFINITION ',' DEFINITION {chain_s_list($1,$3);$$=$1;}
-  |OPERATION {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
-  |ASSIGNMENT {insert_s_list(&$1.postop,$1.op);chain_s_list($1.preop,$1.postop);$$=$1.preop;}
+DEFINITION:DEFINITION ',' DEFINITION {init_op_type(&$$);$$.op=$3.op;insert_s_list(&$1.preop,$1.op);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$1.postop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$3.postop);}
+  |OPERATION {$$=$1;}
+  |ASSIGNMENT {$$=$1;}
 ;
 
 ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$.op=concat($1,convert_assignment($1,$2),$3.op,NULL);
@@ -273,7 +278,7 @@ ASSIGNMENTOP:'='  {$$=-1;}
   |ASSRSHIFT      {$$=ASSRSHIFT;}
 ;                                      
 OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
-  |'('OPERATION')' {$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
+  |'('OPERATION')'{$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
   |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
   |VALUE         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
   |NAME          {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
@@ -308,31 +313,29 @@ RELATIONAL:EQUAL    {$$=" = ";}
 LOGICAL:AND         {$$="and";}
   |OR               {$$="or";}
 ;
-NAME:RVALUE
+
+BITWISE:BAND        {$$="&";}
+  |BOR              {$$="|";}
+  |BXOR             {$$="xor";}
+  |BOC              {$$="~";}
+  |LSHIFT           {$$="shl";}
+  |RSHIFT           {$$="shr";}
+;
+NAME:RVALUE {$$=strdup($1);}
   |LVALUE {$$=strdup($1);}
 ;
 
-RVALUE:BAND IDS
-  |IDS '(' DEFINITION ')'
-  |IDS '('')'
+RVALUE:BAND IDS           {$$=concat("@",$1,NULL);}
+  |IDS '(' DEFINITION ')' {$$=concat($1,"(",")",NULL);}
+  |IDS '('')'             {$$=concat($1,"(",")",NULL);}
 ;
 
-
-
-IDS:ID'.'IDS
-  |ID
+IDS:ID'.'IDS {$$=concat($1,".",$3,NULL);}
+  |ID {$$=$1;}
 ;
 
 STAR:MULT STAR {$$=concat("^",$2,NULL);}
   |MULT   {$$="^";}
-;
-
-BITWISE:BAND 
-  |BOR
-  |BXOR
-  |BOC
-  |LSHIFT
-  |RSHIFT
 ;
 
 VALUE:VALINT {$$=strdup($1);}
@@ -425,6 +428,8 @@ void yyerror(const char *s) {
   c=concat(s," at line ",str," .",NULL);
   //printf("%s\n",c);
   generateError(c,lang);
+  free(c);
+  c=NULL;
 }
 char* concat(const char * args,...){
   va_list valist;
@@ -434,11 +439,13 @@ char* concat(const char * args,...){
   char *arg=args;
   int length=0;
   while(arg!=NULL){
-    length+=sizeof(*arg);
+    length+=strlen(arg);
     arg=va_arg(valist, char*);
   };  
-  char *res=malloc(length+3);
+  char *res=malloc(length+1);
   va_end(valist);
+  free(arg);
+  //arg=malloc(strlen(args));
   arg=strdup(args);
   while(arg!=NULL){
     strcat(res,arg);
@@ -446,6 +453,7 @@ char* concat(const char * args,...){
   };
   va_end(valist2);
   free(arg);
+  arg=NULL;
   return res;
 }
 int main(int argc, char *argv[]) {
@@ -463,6 +471,8 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   yyin = myfile;
+
+
   yyparse();
   //print_id_list(id_table);
   fclose(myfile);

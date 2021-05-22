@@ -21,7 +21,7 @@ const struct t_catch dect[]={
     {0,1,1,"double","Extended"}      //long double 
 };
 char* convert_type(type_rep type){
-    printf("type=%s , nb_short=%d , nb_long=%d,sign=%d\n",type.b_type,type.mod.nb_short,type.mod.nb_long,type.mod.sign);
+    //printf("type=%s , nb_short=%d , nb_long=%d,sign=%d\n",type.b_type,type.mod.nb_short,type.mod.nb_long,type.mod.sign);
     if(!strcmp(type.b_type,"")){
         type.b_type="int";
     }

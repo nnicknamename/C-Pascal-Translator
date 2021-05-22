@@ -34,6 +34,7 @@ struct s_list{
     struct s_list * next_op;
 };
 typedef struct s_list s_list;
+
 struct op_type{
     s_list* preop;
     char* op;
@@ -41,4 +42,25 @@ struct op_type{
 };
 typedef struct op_type op_type;
 
+struct decl_type{
+    char* type;
+    op_type ops;
+    s_list* ids;
+};
+typedef struct decl_type decl_type;
+
+struct decl_list{//declarations
+    char* type;
+    s_list* ids;
+    struct decl_list* next;
+};
+typedef struct decl_list decl_list;
+
+struct  local_type{
+  s_list ops;
+  decl_list *declarations;
+};
+typedef struct local_type local_type;
+
 FILE *out;
+
