@@ -1,7 +1,7 @@
 #include "semantic_types.h"
 
 //operations semantics 
-
+char* concat(const char * args,...);
 
 
 s_list * insert_s_list(s_list **head,char *operation){
@@ -21,7 +21,14 @@ s_list * insert_s_list(s_list **head,char *operation){
   }
   return res;
 }
-
+s_list * insert_first_s_list(s_list **head,char *operation){
+  s_list *res=malloc(sizeof(s_list));
+  s_list *temp=*head;
+    res->op=operation;
+    res->next_op=*head;
+    *head=res;
+  return res;
+}
 void print_s_list(s_list *head,char *separator){
   s_list *temp=head;
   while(temp!=NULL){
@@ -45,6 +52,23 @@ void fprint_s_list(s_list *head,char *separator){
         fprintf(out,"%s ",temp->op);
       }
   }
+}
+
+char * sprint_s_list(s_list *head,char *separator){
+  s_list *temp=head;
+  char *res="";
+  if(temp!=NULL){
+    while(temp->next_op!=NULL){
+      if(temp->op!=NULL){
+        res=concat(res,temp->op,separator,NULL);
+      }
+      temp=temp->next_op;
+    }
+    if(temp->op!=NULL){
+        res=concat(res,temp->op,NULL);
+      }
+  }
+  return res;
 }
 
 void chain_s_list(s_list *list1,s_list *list2){
@@ -116,18 +140,17 @@ local_type *concat_locals(local_type *local,decl_type decl){
   decl_list *temp=local->declarations;
   int concatenated=0;
   if(temp==NULL){
-
     init_local_type(local);
   }
     insert_s_list(&decl.ops.preop,decl.ops.op);
     chain_s_list(local->ops,decl.ops.preop);
     chain_s_list(local->ops,decl.ops.postop);  
-  
+    
   decl_list * x;
   while(temp!=NULL ){
+      //printf("at line %d\n",line );
       if(concatenated==0 && !strcmp(temp->type,decl.type)){
         chain_s_list(temp->ids,decl.ids);
-        //print_s_list(temp->ids,"; ");
         concatenated=1;
       }
       temp=temp->next;
@@ -151,6 +174,7 @@ local_type *concat_locals(local_type *local,decl_type decl){
         temp->next=x;
       }
   }
+  
   return local;
 }
 

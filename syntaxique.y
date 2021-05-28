@@ -3,6 +3,7 @@
     #include <stdio.h>
     #include <string.h>
     #include <stdarg.h>
+    extern int line;
     #include "semantic.h"
     #include "compilateurE/generator.h"   
     #include "type_comparator.h"
@@ -18,7 +19,6 @@
 
     extern int yylex();
     extern int yyparse();
-    extern int line;
     extern FILE *yyin;
     extern id_list *id_table;
     char lang;
@@ -73,8 +73,11 @@
 %type <modif> MODIFIER
 %type <vis> VISIBILITY 
 %type <rep> THREE TWO TYPE
-%type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT SDEFINITION EXPRESSION LINE CONDITIONALS
-%type <loc> LOCAL CODEBLOCK CONDCODE
+
+%type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT 
+%type <decl> SDEFINITION EXPRESSION LINE  
+
+%type <loc> LOCAL  CONDCODE CODEBLOCK CONDITIONALS
 %union{
   nb_modif modif;
   nb_vis vis;
@@ -85,7 +88,6 @@
   char *code;
   int t_val;
   s_list *exp;
-
 }
 %start CODE
 %%
@@ -129,7 +131,7 @@ INCLUDES:'#' INCLUDE HEAD
 DEFINES:'#' DEFINE ID VALUE
 ;
 
-FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprintf(out,"function %s ( ) : %s\n",$2,convert_type($1));fprint_types($7);fprintf(out,"BEGIN\n");fprint_s_list($7.ops,";\n");fprintf(out,"\n END;");}
+FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprintf(out,"function %s ( ) : %s\n",$2,convert_type($1));fprint_types($7);fprintf(out,"BEGIN\n");fprint_s_list($7.ops,"\n");fprintf(out,"\n END;");}
 ;
 
 LVALUE:STAR LVALUE {$$=concat($1,$2,NULL);}
@@ -158,15 +160,15 @@ X:X ',' X
 
 LOCAL:
   |LOCAL LINE     {concat_locals(&$1,$2);$$=$1;}
-  |LOCAL CODEBLOCK     
-  |LOCAL CONDITIONALS {concat_locals(&$1,$2);$$=$1;}
+  |LOCAL CODEBLOCK    {chain_s_list($1.ops,$2.ops);$$=$2;} 
+  |LOCAL CONDITIONALS {chain_s_list($1.ops,$2.ops);$$=$2;}
   |LOCAL WHILELOOP    
   |LOCAL DOWHILE      
   |LOCAL FORLOOP      
   |LOCAL SWITCHCOND   
 ;
 
-LINE:EXPRESSION EL {$$=$1;}  
+LINE:EXPRESSION EL {$$=$1;$$.ops.op=concat($$.ops.op,";",NULL);}  
   |RETURN EXPRESSION EL 
   |BREAK EL
   |STRUCTURE EL
@@ -209,10 +211,10 @@ EXPRESSION: DEFINITION  {$$.ops=$1;$$.type="";$$.ids=NULL;}
   |DECLARATION {$$=$1;}
 ;
 
-CODEBLOCK:  '{' LOCAL '}' {$$=$2;insert_s_list(&$$.ops,"end");}
+CODEBLOCK:  '{' LOCAL '}' {insert_first_s_list(&$2.ops,"begin");insert_s_list(&$2.ops,"end");$$=$2;}
 ;
 
-CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$.ops.preop=$3.preop;$$.ops.op=concat("if ( ",$3.op," ) then begin \n \nend",NULL);$$.type="";$$.ids=NULL;}
+CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("if ( ",$3.op," ) then ",NULL));}
   |IF '(' DEFINITION ')' CONDCODE ELSE CONDCODE
 ;
 
