@@ -56,8 +56,8 @@ struct decl_list{//declarations
 };
 typedef struct decl_list decl_list;
 
-struct  local_type{
-  s_list ops;
+struct local_type{
+  s_list *ops;
   decl_list *declarations;
 };
 typedef struct local_type local_type;

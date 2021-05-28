@@ -67,14 +67,14 @@
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
 
-%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE RVALUE STAR NAME VALUE GOTODEF LABEL BASICTYPE IDS
+%type <code>LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE  STAR VALUE GOTODEF LABEL BASICTYPE IDS
 %type <t_val> ASSIGNMENTOP
-%type <op> GLOBALDEFINITION DEFINITION  OPERATION  ASSIGNMENT GLOBALOPERATION GLOBALASSIGNMENT  
+%type <op> GLOBALDEFINITION DEFINITION ARGDEFINITION OPERATION  ASSIGNMENT GLOBALOPERATION GLOBALASSIGNMENT NAME RVALUE
 %type <modif> MODIFIER
 %type <vis> VISIBILITY 
 %type <rep> THREE TWO TYPE
-%type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT SDEFINITION EXPRESSION LINE
-%type <loc> LOCAL
+%type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT SDEFINITION EXPRESSION LINE CONDITIONALS
+%type <loc> LOCAL CODEBLOCK CONDCODE
 %union{
   nb_modif modif;
   nb_vis vis;
@@ -129,7 +129,7 @@ INCLUDES:'#' INCLUDE HEAD
 DEFINES:'#' DEFINE ID VALUE
 ;
 
-FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprintf(out,"function %s ( ) : %s\n",$2,convert_type($1));fprint_types($7);fprintf(out,"BEGIN\n");fprint_s_list(&$7.ops,";\n");fprintf(out,"END; \n");}
+FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprintf(out,"function %s ( ) : %s\n",$2,convert_type($1));fprint_types($7);fprintf(out,"BEGIN\n");fprint_s_list($7.ops,";\n");fprintf(out,"\n END;");}
 ;
 
 LVALUE:STAR LVALUE {$$=concat($1,$2,NULL);}
@@ -157,9 +157,9 @@ X:X ',' X
 
 
 LOCAL:
-  |LOCAL LINE{concat_locals(&$1,$2);$$=$1;}
+  |LOCAL LINE     {concat_locals(&$1,$2);$$=$1;}
   |LOCAL CODEBLOCK     
-  |LOCAL CONDITIONALS 
+  |LOCAL CONDITIONALS {concat_locals(&$1,$2);$$=$1;}
   |LOCAL WHILELOOP    
   |LOCAL DOWHILE      
   |LOCAL FORLOOP      
@@ -209,14 +209,14 @@ EXPRESSION: DEFINITION  {$$.ops=$1;$$.type="";$$.ids=NULL;}
   |DECLARATION {$$=$1;}
 ;
 
-CODEBLOCK:  '{' LOCAL '}' 
+CODEBLOCK:  '{' LOCAL '}' {$$=$2;insert_s_list(&$$.ops,"end");}
 ;
 
-CONDITIONALS:IF '(' DEFINITION ')' CONDCODE
+CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$.ops.preop=$3.preop;$$.ops.op=concat("if ( ",$3.op," ) then begin \n \nend",NULL);$$.type="";$$.ids=NULL;}
   |IF '(' DEFINITION ')' CONDCODE ELSE CONDCODE
 ;
 
-CONDCODE:CODEBLOCK
+CONDCODE:CODEBLOCK {$$=$1;}
   |LINE
 ;
 
@@ -281,7 +281,7 @@ OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,
   |'('OPERATION')'{$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
   |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
   |VALUE         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
-  |NAME          {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
+  |NAME          {$$=$1;}
   |INCR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 + ",$2,NULL));$$.op=strdup($2);}
   |DECR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 - ",$2,NULL));$$.op=strdup($2);}  
   |LVALUE INCR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 + ",$1,NULL));$$.op=strdup($1);}
@@ -310,26 +310,29 @@ RELATIONAL:EQUAL    {$$=" = ";}
   |INFEQ            {$$=" <= ";}
 ;
 
-LOGICAL:AND         {$$="and";}
-  |OR               {$$="or";}
+LOGICAL:AND         {$$=" and ";}
+  |OR               {$$=" or ";}
 ;
 
-BITWISE:BAND        {$$="&";}
-  |BOR              {$$="|";}
-  |BXOR             {$$="xor";}
-  |BOC              {$$="~";}
-  |LSHIFT           {$$="shl";}
-  |RSHIFT           {$$="shr";}
+BITWISE:BAND        {$$=" & ";}
+  |BOR              {$$=" | ";}
+  |BXOR             {$$=" xor ";}
+  |BOC              {$$=" ~ ";}
+  |LSHIFT           {$$=" shl ";}
+  |RSHIFT           {$$=" shr ";}
 ;
-NAME:RVALUE {$$=strdup($1);}
-  |LVALUE {$$=strdup($1);}
-;
-
-RVALUE:BAND IDS           {$$=concat("@",$1,NULL);}
-  |IDS '(' DEFINITION ')' {$$=concat($1,"(",")",NULL);}
-  |IDS '('')'             {$$=concat($1,"(",")",NULL);}
+NAME:RVALUE {$$=$1;}
+  |LVALUE {init_op_type(&$$);$$.op=$1;$$.postop=NULL;}
 ;
 
+RVALUE:BAND IDS           {init_op_type(&$$);$$.op=concat("@",$1,NULL);$$.postop=NULL;}
+  |IDS '(' ARGDEFINITION ')'{init_op_type(&$$);$$.op=concat($1,"(",$3.op,")",NULL);$$.preop=$3.preop;$$.postop=$3.postop;}
+  |IDS '('')'             {init_op_type(&$$);$$.op=concat($1,"(",")",NULL);$$.postop=NULL;}
+;
+ARGDEFINITION:ARGDEFINITION ',' ARGDEFINITION {init_op_type(&$$);$$.op=concat($1.op," , ",$3.op,NULL);}
+  |OPERATION {$$=$1;}
+  |ASSIGNMENT {$$=$1;}
+;
 IDS:ID'.'IDS {$$=concat($1,".",$3,NULL);}
   |ID {$$=$1;}
 ;
@@ -471,7 +474,6 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   yyin = myfile;
-
 
   yyparse();
   //print_id_list(id_table);

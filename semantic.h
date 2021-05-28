@@ -46,6 +46,7 @@ void fprint_s_list(s_list *head,char *separator){
       }
   }
 }
+
 void chain_s_list(s_list *list1,s_list *list2){
   if(list1!=NULL){
     s_list *temp=list1;
@@ -103,7 +104,8 @@ type_rep init_type_rep(){
 } */
 
 void init_local_type(local_type *local){
-  local->ops.next_op=NULL;
+  local->ops=malloc(sizeof(s_list));
+  local->ops->next_op=NULL;
   local->declarations=malloc(sizeof(decl_list));
   local->declarations->type="";
   local->declarations->ids=malloc(sizeof(s_list));
@@ -114,12 +116,12 @@ local_type *concat_locals(local_type *local,decl_type decl){
   decl_list *temp=local->declarations;
   int concatenated=0;
   if(temp==NULL){
+
     init_local_type(local);
   }
     insert_s_list(&decl.ops.preop,decl.ops.op);
-    chain_s_list(&local->ops,decl.ops.preop);
-
-    chain_s_list(&local->ops,decl.ops.postop);  
+    chain_s_list(local->ops,decl.ops.preop);
+    chain_s_list(local->ops,decl.ops.postop);  
   
   decl_list * x;
   while(temp!=NULL ){
