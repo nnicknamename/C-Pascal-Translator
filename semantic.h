@@ -138,7 +138,9 @@ void init_local_type(local_type *local){
   local->declarations->ids->next_op=NULL;
   local->declarations->next=NULL;
 }
-local_type *concat_locals(local_type *local,decl_type decl){
+
+
+local_type *insert_decl_in_loc(local_type *local,decl_type decl){
   decl_list *temp=local->declarations;
   int concatenated=0;
   if(temp==NULL){
@@ -147,10 +149,11 @@ local_type *concat_locals(local_type *local,decl_type decl){
     insert_s_list(&decl.ops.preop,decl.ops.op);
     chain_s_list(local->ops,decl.ops.preop);
     chain_s_list(local->ops,decl.ops.postop);  
-    
+  
   decl_list * x;
-  while(temp!=NULL ){
-      //printf("at line %d\n",line );
+
+  while(temp!=NULL){
+      printf("at line %d\n",line );
       if(concatenated==0 && !strcmp(temp->type,decl.type)){
         chain_s_list(temp->ids,decl.ids);
         concatenated=1;
@@ -178,6 +181,12 @@ local_type *concat_locals(local_type *local,decl_type decl){
   }
   
   return local;
+}
+
+void chain_local(local_type *local1,local_type *local2){
+  chain_s_list(local1->ops,local2->ops);
+  print_s_list(local1->ops,",  ");
+  printf("tt\n");
 }
 
 void print_types( local_type local){

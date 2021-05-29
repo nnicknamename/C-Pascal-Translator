@@ -77,7 +77,7 @@
 %type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT 
 %type <decl> SDEFINITION EXPRESSION LINE  
 
-%type <loc> LOCAL  CONDCODE CODEBLOCK CONDITIONALS
+%type <loc> LOCAL  CONDCODE CODEBLOCK CONDITIONALS WHILELOOP DOWHILE
 %union{
   nb_modif modif;
   nb_vis vis;
@@ -158,12 +158,12 @@ X:X ',' X
   ;
 
 
-LOCAL:
-  |LOCAL LINE     {concat_locals(&$1,$2);$$=$1;}
-  |LOCAL CODEBLOCK    {chain_s_list($1.ops,$2.ops);$$=$2;} 
-  |LOCAL CONDITIONALS {chain_s_list($1.ops,$2.ops);$$=$2;}
-  |LOCAL WHILELOOP    
-  |LOCAL DOWHILE      
+LOCAL: {init_local_type(&$$);}
+  |LOCAL LINE         {insert_decl_in_loc(&$1,$2);$$=$1;}
+  |LOCAL CODEBLOCK    {chain_local(&$1,&$2);$$=$1;} 
+  |LOCAL CONDITIONALS {chain_local(&$1,&$2);$$=$1;}
+  |LOCAL WHILELOOP    {chain_local(&$1,&$2);$$=$1;}
+  |LOCAL DOWHILE      {chain_local(&$1,&$2);$$=$1;}
   |LOCAL FORLOOP      
   |LOCAL SWITCHCOND   
 ;
@@ -215,17 +215,17 @@ CODEBLOCK:  '{' LOCAL '}' {insert_first_s_list(&$2.ops,"begin");insert_s_list(&$
 ;
 
 CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("if ( ",$3.op," ) then ",NULL));}
-  |IF '(' DEFINITION ')' CONDCODE ELSE CONDCODE
+  |IF '(' DEFINITION ')' CONDCODE ELSE CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("if ( ",$3.op," ) then ",NULL));insert_s_list(&$$.ops,"else");chain_s_list($$.ops,$7.ops);}
 ;
 
 CONDCODE:CODEBLOCK {$$=$1;}
   |LINE
 ;
 
-WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE 
+WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("while ( ",$3.op," ) do ",NULL));}
 ;
 
-DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL
+DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL {$$=$2;insert_first_s_list(&$$.ops,"do");insert_s_list(&$$.ops,concat("while ( ",$5.op," )",NULL));}
 ;
 
 GLOBALDECLARATION: TYPE GLOBALDEFINITION  {$$.type=convert_type($1);$$.ops=$2;}
