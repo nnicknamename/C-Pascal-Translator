@@ -1695,7 +1695,7 @@ yyreduce:
 
   case 50:
 #line 171 "syntaxique.y" /* yacc.c:1646  */
-    {(yyval.decl)=(yyvsp[-1].decl);(yyval.decl).ops.op=concat((yyval.decl).ops.op,";",NULL);}
+    {(yyval.decl)=(yyvsp[-1].decl);postfix_s_list((yyval.decl).ops.preop,";");postfix_s_list((yyval.decl).ops.postop,";");(yyval.decl).ops.op=concat((yyval.decl).ops.op,";",NULL);}
 #line 1700 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1731,7 +1731,7 @@ yyreduce:
 
   case 83:
 #line 231 "syntaxique.y" /* yacc.c:1646  */
-    {(yyval.decl).type=convert_type((yyvsp[-1].rep)); (yyval.decl).ops=(yyvsp[0].op);}
+    {(yyval.decl).type=convert_type((yyvsp[-1].rep));(yyval.decl).ops=(yyvsp[0].op);}
 #line 1736 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 

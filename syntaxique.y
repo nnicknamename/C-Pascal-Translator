@@ -168,7 +168,7 @@ LOCAL:
   |LOCAL SWITCHCOND   
 ;
 
-LINE:EXPRESSION EL {$$=$1;$$.ops.op=concat($$.ops.op,";",NULL);}  
+LINE:EXPRESSION EL {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=concat($$.ops.op,";",NULL);}  
   |RETURN EXPRESSION EL 
   |BREAK EL
   |STRUCTURE EL
@@ -228,7 +228,7 @@ WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE
 DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL
 ;
 
-GLOBALDECLARATION: TYPE GLOBALDEFINITION  {$$.type=convert_type($1); $$.ops=$2;}
+GLOBALDECLARATION: TYPE GLOBALDEFINITION  {$$.type=convert_type($1);$$.ops=$2;}
 ;
 
 DECLARATION:TYPE SDEFINITION {$$=$2;$$.type=convert_type($1);}

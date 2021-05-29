@@ -29,6 +29,17 @@ s_list * insert_first_s_list(s_list **head,char *operation){
     *head=res;
   return res;
 }
+
+void postfix_s_list(s_list *head,char *postfix){
+  s_list *temp=head;
+    while(temp!=NULL){
+      if(temp->op!=NULL){
+        temp->op=concat(temp->op,postfix,NULL);
+      }
+      temp=temp->next_op;
+    }
+}
+
 void print_s_list(s_list *head,char *separator){
   s_list *temp=head;
   while(temp!=NULL){
@@ -118,15 +129,6 @@ type_rep init_type_rep(){
 }
 
 //LOCAL semantics 
-/*void init_decls(decl_type **declaration){
-  decl_type *decl;
-  decl=malloc(sizeof(decl_type));
-  decl->type="NULL";//causes segmentation fault if printed before a change 
-  init_op_type(&decl->ops);
-  decl->ids=NULL;
-  *declaration=decl;
-} */
-
 void init_local_type(local_type *local){
   local->ops=malloc(sizeof(s_list));
   local->ops->next_op=NULL;
