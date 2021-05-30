@@ -30,5 +30,5 @@ char* convert_type(type_rep type){
             return dect[i].p_type;
         }
     }
-    return "fuk";
+    return NULL;
 }

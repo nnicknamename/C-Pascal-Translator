@@ -39,6 +39,7 @@ struct op_type{
     s_list* preop;
     char* op;
     s_list* postop;
+    int simple;
 };
 typedef struct op_type op_type;
 

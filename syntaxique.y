@@ -53,6 +53,7 @@
 %token EL
 %token HEAD
 %token END
+%left ELSE
 
 %right'=' ASSADD ASSMINUS ASSMULT ASSDIVIDE ASSMOD ASSBAND ASSBOR ASSBXOR ASSLSHIFT ASSRSHIFT
 %left OR 
@@ -77,7 +78,7 @@
 %type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT 
 %type <decl> SDEFINITION EXPRESSION LINE  
 
-%type <loc> LOCAL  CONDCODE CODEBLOCK CONDITIONALS WHILELOOP DOWHILE
+%type <loc> LOCAL  CONDCODE CODEBLOCK CONDITIONALS WHILELOOP DOWHILE SWITCHCOND
 %union{
   nb_modif modif;
   nb_vis vis;
@@ -108,7 +109,7 @@ GLOBAL:INCLUDES
 SIZEOFDEF:SIZEOF '('OPERATION')'
   |SIZEOF '('TYPE')'
 ;
-GOTODEF: GOTO ID {$$=concat($1,$2,NULL);}
+GOTODEF: GOTO ID {$$=concat("goto",$2,NULL);}
 ;
 ENUMDEF:ENUM ID '{'ENUMARGS'}'
 ;
@@ -131,11 +132,11 @@ INCLUDES:'#' INCLUDE HEAD
 DEFINES:'#' DEFINE ID VALUE
 ;
 
-FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprintf(out,"function %s ( ) : %s\n",$2,convert_type($1));fprint_types($7);fprintf(out,"BEGIN\n");fprint_s_list($7.ops,"\n");fprintf(out,"\n END;");}
+FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprintf(out,"function %s ( ) : %s\n",$2,convert_type($1));fprint_types($7);fprintf(out,"BEGIN\n");fprint_s_list($7.ops,"\n");fprintf(out,"\nEND;");}
 ;
 
 LVALUE:STAR LVALUE {$$=concat($1,$2,NULL);}
-  |ID {$$=strdup($1);}
+  |ID {$$=$1;}
   |ID'['OPERATION']'{$$=concat("[",$3.op,"]",NULL);}
 ;
 
@@ -158,18 +159,18 @@ X:X ',' X
   ;
 
 
-LOCAL: {init_local_type(&$$);}
-  |LOCAL LINE         {insert_decl_in_loc(&$1,$2);$$=$1;}
+LOCAL: {/*init_local_type(&$$);*/}
+  |LOCAL LINE         {$$=$1;insert_decl_in_loc(&$$,$2);}
   |LOCAL CODEBLOCK    {chain_local(&$1,&$2);$$=$1;} 
   |LOCAL CONDITIONALS {chain_local(&$1,&$2);$$=$1;}
   |LOCAL WHILELOOP    {chain_local(&$1,&$2);$$=$1;}
   |LOCAL DOWHILE      {chain_local(&$1,&$2);$$=$1;}
   |LOCAL FORLOOP      
-  |LOCAL SWITCHCOND   
+  |LOCAL SWITCHCOND   {chain_local(&$1,&$2);$$=$1;}
 ;
 
-LINE:EXPRESSION EL {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=concat($$.ops.op,";",NULL);}  
-  |RETURN EXPRESSION EL 
+LINE:EXPRESSION EL {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=strcmp($$.ops.op,"")?concat($$.ops.op,";",NULL):"";}  
+  |RETURN EXPRESSION EL {$$=$2;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=concat("Exit(",$$.ops.op,");",NULL);}  
   |BREAK EL
   |STRUCTURE EL
   |TYPEDEFINITION EL
@@ -180,7 +181,7 @@ LINE:EXPRESSION EL {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops
   |CONTINUE EL
 ;
 
-SWITCHCOND:SWITCH '('EXPRESSION')' '{'SWITCHINSIDE'}'
+SWITCHCOND:SWITCH '('EXPRESSION')' '{'SWITCHINSIDE'}' 
 ;
 
 SWITCHINSIDE: CASE1 SWITCHINSIDE
@@ -204,6 +205,8 @@ DEFAULT1:DEFAULT ':' LINE
 ;
 DEFAULT2:DEFAULT ':' LINE
 ;
+
+
 FORLOOP:FOR '(' EXPRESSION EL EXPRESSION EL EXPRESSION')'CODEBLOCK
 ;
 
@@ -219,13 +222,13 @@ CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,c
 ;
 
 CONDCODE:CODEBLOCK {$$=$1;}
-  |LINE
+  |LINE {init_local_type(&$$);insert_decl_in_loc(&$$,$1);}
 ;
 
 WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("while ( ",$3.op," ) do ",NULL));}
 ;
 
-DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL {$$=$2;insert_first_s_list(&$$.ops,"do");insert_s_list(&$$.ops,concat("while ( ",$5.op," )",NULL));}
+DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL {$$=$2;insert_first_s_list(&$$.ops,"repeat");insert_s_list(&$$.ops,concat("until ( ",$5.op," );",NULL));}
 ;
 
 GLOBALDECLARATION: TYPE GLOBALDEFINITION  {$$.type=convert_type($1);$$.ops=$2;}
@@ -236,7 +239,7 @@ DECLARATION:TYPE SDEFINITION {$$=$2;$$.type=convert_type($1);}
 
 SDEFINITION:SDEFINITION ',' SDEFINITION {init_op_type(&$$.ops);$$.ops.op=$3.ops.op;insert_s_list(&$1.ops.preop,$1.ops.op);chain_s_list($$.ops.preop,$1.ops.preop);chain_s_list($$.ops.preop,$1.ops.postop);chain_s_list($$.ops.preop,$3.ops.preop);chain_s_list($$.ops.postop,$3.ops.postop);$$.ids=$1.ids;chain_s_list($$.ids,$3.ids);}
   |SASSIGNMENT {$$=$1;}
-  |LVALUE {init_op_type(&$$.ops);$$.ops.op=strdup($1);$$.ops.postop=NULL;$$.ids=insert_s_list(&$$.ids,$1);}
+  |LVALUE {init_op_type(&$$.ops);$$.ops.op="";$$.ops.postop=NULL;$$.ids=insert_s_list(&$$.ids,$1);}
 ;
 
 SASSIGNMENT:LVALUE '=' OPERATION {$$.ops.op=concat($1,convert_assignment($1,-1),$3.op,NULL);
@@ -245,7 +248,7 @@ $$.ops.preop=$3.preop;$$.ops.postop=$3.postop;$$.ids=insert_s_list(&$$.ids,$1);}
 
 GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION {init_op_type(&$$);$$.op=concat($1.op,",",$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
   |GLOBALASSIGNMENT {$$=$1;}
-  |LVALUE {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
+  |LVALUE {init_op_type(&$$);$$.op=$1;$$.postop=NULL;}
 ;
 
 GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION {$$.op=concat($1," =: ",$3.op,NULL);$$.preop=$3.preop;$$.postop=$3.postop;}
@@ -259,7 +262,7 @@ GLOBALOPERATION:GLOBALOPERATION OPERATOR GLOBALOPERATION {init_op_type(&$$);$$.o
 ;
 
 DEFINITION:DEFINITION ',' DEFINITION {init_op_type(&$$);$$.op=$3.op;insert_s_list(&$1.preop,$1.op);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$1.postop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$3.postop);}
-  |OPERATION {$$=$1;}
+  |OPERATION {$$=$1;if($1.simple!=0){$$.op="";}}
   |ASSIGNMENT {$$=$1;}
 ;
 
@@ -279,11 +282,11 @@ ASSIGNMENTOP:'='  {$$=-1;}
   |ASSLSHIFT      {$$=ASSLSHIFT;}
   |ASSRSHIFT      {$$=ASSRSHIFT;}
 ;                                      
-OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
+OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);$$.simple=0;}
   |'('OPERATION')'{$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
   |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
-  |VALUE         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
-  |NAME          {$$=$1;}
+  |VALUE         {init_op_type(&$$);$$.op=$1;$$.postop=NULL;$$.preop=NULL;}
+  |NAME          {$$=$1;$$.simple=1;}
   |INCR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 + ",$2,NULL));$$.op=strdup($2);}
   |DECR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 - ",$2,NULL));$$.op=strdup($2);}  
   |LVALUE INCR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 + ",$1,NULL));$$.op=strdup($1);}

@@ -127,7 +127,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 81 "syntaxique.y" /* yacc.c:1909  */
+#line 82 "syntaxique.y" /* yacc.c:1909  */
 
   nb_modif modif;
   nb_vis vis;

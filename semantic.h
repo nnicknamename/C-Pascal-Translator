@@ -5,6 +5,7 @@ char* concat(const char * args,...);
 
 
 s_list * insert_s_list(s_list **head,char *operation){
+  if(strcmp(operation,"")!=0){
   s_list *res=malloc(sizeof(s_list));
   s_list *temp=*head;
   if(temp==NULL){
@@ -20,20 +21,25 @@ s_list * insert_s_list(s_list **head,char *operation){
       temp->next_op=res;
   }
   return res;
+  }
+  return *head;
 }
 s_list * insert_first_s_list(s_list **head,char *operation){
+  if(strcmp(operation,"")!=0){
   s_list *res=malloc(sizeof(s_list));
   s_list *temp=*head;
     res->op=operation;
     res->next_op=*head;
     *head=res;
   return res;
+  }
+  return *head;
 }
 
 void postfix_s_list(s_list *head,char *postfix){
   s_list *temp=head;
     while(temp!=NULL){
-      if(temp->op!=NULL){
+      if(temp->op!=NULL && strcmp(temp->op,"")){
         temp->op=concat(temp->op,postfix,NULL);
       }
       temp=temp->next_op;
@@ -43,7 +49,7 @@ void postfix_s_list(s_list *head,char *postfix){
 void print_s_list(s_list *head,char *separator){
   s_list *temp=head;
   while(temp!=NULL){
-    if(temp->op!=NULL){
+    if(temp->op!=NULL && strcmp(temp->op,"")){
       printf("%s %s",temp->op,separator);
     }
     temp=temp->next_op;
@@ -52,10 +58,23 @@ void print_s_list(s_list *head,char *separator){
 
 void fprint_s_list(s_list *head,char *separator){
   s_list *temp=head;
+  int tabs=0;
   if(temp!=NULL){
     while(temp->next_op!=NULL){
       if(temp->op!=NULL){
+        if(strcmp(temp->op,"end")==0){
+            tabs--;
+        }
+
+        for(int i=0;i<tabs;i++){
+          fprintf(out,"\t");
+        }
+        if(strcmp(temp->op,"begin")==0){
+          tabs++;
+        }
+        if(strcmp(temp->op,"")){
         fprintf(out,"%s %s",temp->op,separator);
+        }
       }
       temp=temp->next_op;
     }
@@ -70,12 +89,12 @@ char * sprint_s_list(s_list *head,char *separator){
   char *res="";
   if(temp!=NULL){
     while(temp->next_op!=NULL){
-      if(temp->op!=NULL){
+      if(temp->op!=NULL && strcmp(temp->op,"")){
         res=concat(res,temp->op,separator,NULL);
       }
       temp=temp->next_op;
     }
-    if(temp->op!=NULL){
+    if(temp->op!=NULL && strcmp(temp->op,"")){
         res=concat(res,temp->op,NULL);
       }
   }
@@ -94,6 +113,7 @@ void chain_s_list(s_list *list1,s_list *list2){
   }
 }
 void init_op_type(op_type *opr){
+  opr->simple=1;
   opr->preop=malloc(sizeof(s_list));
   opr->postop=malloc(sizeof(s_list));
   opr->preop->next_op=NULL;
@@ -143,50 +163,79 @@ void init_local_type(local_type *local){
 local_type *insert_decl_in_loc(local_type *local,decl_type decl){
   decl_list *temp=local->declarations;
   int concatenated=0;
+  decl_list * x;
+  x=malloc(sizeof(decl_list));
   if(temp==NULL){
     init_local_type(local);
-  }
-    insert_s_list(&decl.ops.preop,decl.ops.op);
-    chain_s_list(local->ops,decl.ops.preop);
-    chain_s_list(local->ops,decl.ops.postop);  
-  
-  decl_list * x;
-
-  while(temp!=NULL){
-      printf("at line %d\n",line );
-      if(concatenated==0 && !strcmp(temp->type,decl.type)){
-        chain_s_list(temp->ids,decl.ids);
-        concatenated=1;
-      }
-      temp=temp->next;
-  }
-  if(concatenated==0){
-    x=malloc(sizeof(decl_list));
-    decl_list *temp=local->declarations;
-    if(temp==NULL){
-      x->type=decl.type;
-      x->next=local->declarations;
-      x->ids=decl.ids;
-      local->declarations=x;
-
-      }else{
+    x->type=decl.type;
+    x->next=local->declarations;
+    x->ids=decl.ids;
+    local->declarations=x;
+  }else{  
+    while(temp!=NULL){
+        //printf("at line %d\n",line );
+        if(concatenated==0 && !strcmp(temp->type,decl.type)){
+            chain_s_list(temp->ids,decl.ids);
+            concatenated=1;
+        }
+        temp=temp->next;
+    }
+    if(concatenated==0){
+        decl_list *temp=local->declarations;
         while(temp->next!=NULL){
-          temp=temp->next;
+            temp=temp->next;
         }
         x->type=decl.type;
         x->next=NULL;
         x->ids=decl.ids;
         temp->next=x;
-      }
+       // printf("type: %s\n",x->type);
+    }
   }
-  
-  return local;
+    insert_s_list(&decl.ops.preop,decl.ops.op);
+    chain_s_list(local->ops,decl.ops.preop);
+    chain_s_list(local->ops,decl.ops.postop);  
+    return local;
 }
 
 void chain_local(local_type *local1,local_type *local2){
   chain_s_list(local1->ops,local2->ops);
-  print_s_list(local1->ops,",  ");
-  printf("tt\n");
+  int concatenated=0 ;
+  decl_list *temp2=local2->declarations;
+  while(temp2!=NULL){
+    concatenated=0;
+    decl_list *temp1=local1->declarations;
+    while(temp1!=NULL){
+        //printf("at line %d\n",line );
+        if(concatenated==0 && !strcmp(temp1->type,temp2->type)){
+          chain_s_list(temp1->ids,temp2->ids);
+          concatenated=1;
+        }
+        temp1=temp1->next;
+    }
+      decl_list * x;
+    if(concatenated==0){
+    x=malloc(sizeof(decl_list));
+    decl_list *temp=local1->declarations;
+    if(temp==NULL){
+      x->type=temp2->type;
+      x->next=local1->declarations;
+      x->ids=temp2->ids;
+      local1->declarations=x;
+      }else{
+        while(temp->next!=NULL){
+          temp=temp->next;
+        }
+        x->type=temp2->type;
+        x->next=NULL;
+        x->ids=temp2->ids;
+        temp->next=x;
+      }
+  }
+    temp2=temp2->next;
+  }
+  //print_s_list(local1->ops,",  "); 
+  //printf("tt\n");
 }
 
 void print_types( local_type local){
