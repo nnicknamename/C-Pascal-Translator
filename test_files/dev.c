@@ -42,7 +42,7 @@ void mult(){
 		}else{//code du precessus pere  
 			read(p[0],&resultat1,sizeof(int));//lecture du premier resultat dans le tube p
 			read(p[0],&resultat2,sizeof(int));//lecture du dexieme resultat dans le tube p
-   			float result=(float)resultat1*resultat2;//calcule de (a+b)*(c+d)
+   			float result=resultat1*resultat2;//calcule de (a+b)*(c+d)
 			write(p1[1],&result,sizeof(float));//ecriture de (a+b)*(c+d)
 		}
 	}
@@ -65,7 +65,7 @@ void sub(){
 			wait(NULL);
 			read(p2[0],&AmultB_result,sizeof(int));//lecture de a*b de pipe2
    			read(p2[0],&CmultD_result,sizeof(int));//lecture de c*d de pipe2
-   			float result=(float)AmultB_result-CmultD_result;//calcule de (a*b)-(c*d)
+   			float result=AmultB_result-CmultD_result;//calcule de (a*b)-(c*d)
   			int f;
 			read(p1[0],&f,sizeof(float));//recuperer le resultat de mut pour attendre la fin de son calcule 
 			write(p1[1],&f,sizeof(float));//remettre la valeure de a*b dans le tube p2

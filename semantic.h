@@ -2,7 +2,7 @@
 
 //operations semantics 
 char* concat(const char * args,...);
-
+char* convert_type(type_rep type);
 
 s_list * insert_s_list(s_list **head,char *operation){
   if(strcmp(operation,"")!=0){
@@ -45,6 +45,16 @@ void postfix_s_list(s_list *head,char *postfix){
       temp=temp->next_op;
     }
 }
+void postfix_last_s_list(s_list *head,char *postfix){
+  s_list *temp=head;
+    while(temp!=NULL){
+      if(temp->next_op==NULL &&temp->op!=NULL && strcmp(temp->op,"")){
+        temp->op=concat(temp->op,postfix,NULL);
+      }
+      temp=temp->next_op;
+    }
+}
+
 
 void print_s_list(s_list *head,char *separator){
   s_list *temp=head;
@@ -62,14 +72,14 @@ void fprint_s_list(s_list *head,char *separator){
   if(temp!=NULL){
     while(temp->next_op!=NULL){
       if(temp->op!=NULL){
-        if(strcmp(temp->op,"end")==0){
+        if(strncmp(temp->op,"end",3)==0){
             tabs--;
         }
 
         for(int i=0;i<tabs;i++){
           fprintf(out,"\t");
         }
-        if(strcmp(temp->op,"begin")==0){
+        if(strncmp(temp->op,"begin",5)==0){
           tabs++;
         }
         if(strcmp(temp->op,"")){
@@ -198,13 +208,15 @@ local_type *insert_decl_in_loc(local_type *local,decl_type decl){
     return local;
 }
 
-void chain_local(local_type *local1,local_type *local2){
-  chain_s_list(local1->ops,local2->ops);
-  int concatenated=0 ;
-  decl_list *temp2=local2->declarations;
+
+
+
+void chain_decl_list(decl_list *decl1,decl_list *decl2){
+int concatenated=0;
+  decl_list *temp2=decl2;
   while(temp2!=NULL){
     concatenated=0;
-    decl_list *temp1=local1->declarations;
+    decl_list *temp1=decl1;
     while(temp1!=NULL){
         //printf("at line %d\n",line );
         if(concatenated==0 && !strcmp(temp1->type,temp2->type)){
@@ -216,12 +228,12 @@ void chain_local(local_type *local1,local_type *local2){
       decl_list * x;
     if(concatenated==0){
     x=malloc(sizeof(decl_list));
-    decl_list *temp=local1->declarations;
+    decl_list *temp=decl1;
     if(temp==NULL){
       x->type=temp2->type;
-      x->next=local1->declarations;
+      x->next=decl1;
       x->ids=temp2->ids;
-      local1->declarations=x;
+      decl1=x;
       }else{
         while(temp->next!=NULL){
           temp=temp->next;
@@ -234,9 +246,12 @@ void chain_local(local_type *local1,local_type *local2){
   }
     temp2=temp2->next;
   }
-  //print_s_list(local1->ops,",  "); 
-  //printf("tt\n");
 }
+void chain_local(local_type *local1,local_type *local2){
+  chain_s_list(local1->ops,local2->ops);
+  chain_decl_list(local1->declarations,local2->declarations);
+}
+
 
 void print_types( local_type local){
   decl_list *temp=local.declarations;
@@ -248,13 +263,32 @@ void print_types( local_type local){
 }
 void fprint_types(local_type local){
   decl_list *temp=local.declarations;
-  fprintf(out,"var ");
+  int first=1;
   while(temp!=NULL){
     if(strcmp(temp->type,"")){
+      if(first){
+        fprintf(out,"var ");
+        first=0;
+      }
       fprint_s_list(temp->ids,", ");
       fprintf(out,": %s ;\n",temp->type);
     }
     temp=temp->next;
   }
 }
-//{fprint_s_list($1.ops.preop,";\n");fprintf(out,"%s ;\n",$1.ops.op);fprint_s_list($1.ops.postop,";\n");printf("%s ",$1.type);print_s_list($1.ids,",");printf(";\n");}
+
+
+void fprint_functions(type_rep type,char * name,char *args,local_type local){
+  if(strncmp(name,"main",4)){
+    fprintf(out,"function %s ( %s ) : %s;\n",name,args,convert_type(type));
+    fprint_types(local);
+    fprintf(out,"BEGIN\n");
+    fprint_s_list(local.ops,"\n");
+    fprintf(out,"\nEND;\n");
+  }else{
+      fprint_types(local);
+    fprintf(out,"BEGIN\n");
+    fprint_s_list(local.ops,"\n");
+    fprintf(out,"\nEND.\n");
+  }
+} 

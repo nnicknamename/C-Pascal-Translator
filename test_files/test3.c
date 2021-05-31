@@ -3,11 +3,7 @@
 #include <stdlib.h>
 
 
-    typedef struct op_type{
-    char* preop;
-    char* op;
-    char* postop;
-    }op_type;
+
 op_type op_concat(op_type op1,char *opr,op_type op2);
 
 int main(){
@@ -29,4 +25,6 @@ op_type op_concat(op_type op1,char *opr,op_type op2){
   sprintf(res.postop,"%s%s",op1.op,op2.op);
   return res;
 }
+
+
 
