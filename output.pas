@@ -25,7 +25,7 @@ begin
 end ; 
 Exit(a); 
 END;
-var l , a , i : integer ;
+var l , a , j , i : integer ;
 BEGIN
 l := 2435; 
 a := 0; 
@@ -35,6 +35,30 @@ begin
 	a := a mod l; 
 	a := 1 + a; 
 	a := 1 + a; 
+	j := 0; 
+	while(j < 10) do 
+	begin 
+		a := a mod l; 
+		a := 1 + a; 
+		a := 1 + a; 
+		j := j + 1; 
+	end ; 
+	i := i + 1; 
+end ; 
+i := 0; 
+while(i < 10) do 
+begin 
+	a := a mod l; 
+	a := 1 + a; 
+	a := 1 + a; 
+	j := 0; 
+	while(j < 10) do 
+	begin 
+		a := a mod l; 
+		a := 1 + a; 
+		a := 1 + a; 
+		j := j + 1; 
+	end ; 
 	i := i + 1; 
 end ; 
 END.

@@ -153,6 +153,46 @@ void chain_s_list(s_list *list1,s_list *list2){
     list1=list2;
   }
 }
+s_list * insert_s_list_id(s_list **head,char *operation){
+
+  if(strcmp(operation,"")!=0){
+  s_list *res=malloc(sizeof(s_list));
+  s_list *temp=*head;
+  s_list *temp1;
+  if(temp==NULL){
+    res->op=operation;
+    res->next_op=*head;
+    *head=res;
+  }else{
+    while(temp!=NULL){
+      if(!strcmp(temp->op,operation)){
+        return *head;
+      }
+      temp1=temp;
+      temp=temp->next_op;
+    }
+      res->op=operation;
+      res->next_op=NULL;
+      temp1->next_op=res;
+                printf("test\n");
+  }
+
+  return res;
+  }
+  return *head;
+}
+void chain_s_list_id(s_list *list1,s_list *list2){
+  if(list2!=NULL ){
+    s_list *temp=list2;
+    while(temp!=NULL){
+      if(temp->op!=NULL){
+
+        insert_s_list_id(&list1,temp->op);
+      }
+      temp=temp->next_op;
+    }
+  }
+}
 void init_op_type(op_type *opr){
   opr->simple=1;
   opr->preop=malloc(sizeof(s_list));
@@ -216,7 +256,7 @@ local_type *insert_decl_in_loc(local_type *local,decl_type decl){
     while(temp!=NULL){
         //printf("at line %d\n",line );
         if(concatenated==0 && !strcmp(temp->type,decl.type)){
-            chain_s_list(temp->ids,decl.ids);
+            chain_s_list_id(temp->ids,decl.ids);
             concatenated=1;
         }
         temp=temp->next;
@@ -251,12 +291,12 @@ int concatenated=0;
     while(temp1!=NULL){
         //printf("at line %d\n",line );
         if(concatenated==0 && !strcmp(temp1->type,temp2->type)){
-          chain_s_list(temp1->ids,temp2->ids);
+          chain_s_list_id(temp1->ids,temp2->ids);
           concatenated=1;
         }
         temp1=temp1->next;
     }
-      decl_list * x;
+    decl_list * x;
     if(concatenated==0){
     x=malloc(sizeof(decl_list));
     decl_list *temp=decl1;

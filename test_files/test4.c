@@ -21,13 +21,27 @@ float minus(float x,float y){
 }
 
 int main(){
-int l=2435;
-int a=0;
+    int l=2435;
+    int a=0;
     for(int i=0;i<10;i=i+1){
         a%=l;
         a++;
         a++;
+        for(int j=0;j<10;j=j+1){
+            a%=l;
+            a++;
+            a++;
+        }
     }
-
+    for(int i=0;i<10;i=i+1){
+        a%=l;
+        a++;
+        a++;
+        for(int j=0;j<10;j=j+1){
+            a%=l;
+            a++;
+            a++;
+        }
+    }
 }
 //init_op_type(&$$.ops);$$.ops.op=$3.ops.op;chain_s_list($$.ops.postop,$3.ops.postop);insert_s_list(&$1.ops.preop,$1.ops.op);chain_s_list($$.ops.preop,$1.ops.preop);
