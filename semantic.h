@@ -4,6 +4,16 @@
 char* concat(const char * args,...);
 char* convert_type(type_rep type);
 
+int length_s_list(s_list **head){
+  int res=0;
+  s_list *temp=*head;
+  while(temp->next_op!=NULL){
+    res++;
+    temp=temp->next_op;
+  }
+  return res;
+}
+
 s_list * insert_s_list(s_list **head,char *operation){
   if(strcmp(operation,"")!=0){
   s_list *res=malloc(sizeof(s_list));
@@ -35,7 +45,28 @@ s_list * insert_first_s_list(s_list **head,char *operation){
   }
   return *head;
 }
+s_list * insert_n_s_list(s_list **head,char *operation,int n){
+  if(strcmp(operation,"")!=0){
+    s_list *res=malloc(sizeof(s_list));
+    s_list *temp=*head;
+    s_list *temp1=*head;
 
+    if(temp!=NULL){
+    {
+      while(temp->next_op!=NULL && n>0){
+        temp1=temp;
+        temp=temp->next_op;
+        n--;
+      }
+        res->op=operation;
+        res->next_op=temp->next_op;
+        temp->next_op=res;
+    }
+    return res;
+    }
+    return *head;
+  }
+}
 void postfix_s_list(s_list *head,char *postfix){
   s_list *temp=head;
     while(temp!=NULL){
@@ -247,11 +278,11 @@ int concatenated=0;
     temp2=temp2->next;
   }
 }
+
 void chain_local(local_type *local1,local_type *local2){
   chain_s_list(local1->ops,local2->ops);
   chain_decl_list(local1->declarations,local2->declarations);
 }
-
 
 void print_types( local_type local){
   decl_list *temp=local.declarations;
@@ -261,6 +292,7 @@ void print_types( local_type local){
     temp=temp->next;
   }
 }
+
 void fprint_types(local_type local){
   decl_list *temp=local.declarations;
   int first=1;
@@ -277,7 +309,6 @@ void fprint_types(local_type local){
   }
 }
 
-
 void fprint_functions(type_rep type,char * name,char *args,local_type local){
   if(strncmp(name,"main",4)){
     fprintf(out,"function %s ( %s ) : %s;\n",name,args,convert_type(type));
@@ -286,9 +317,35 @@ void fprint_functions(type_rep type,char * name,char *args,local_type local){
     fprint_s_list(local.ops,"\n");
     fprintf(out,"\nEND;\n");
   }else{
-      fprint_types(local);
+    fprint_types(local);
     fprintf(out,"BEGIN\n");
     fprint_s_list(local.ops,"\n");
     fprintf(out,"\nEND.\n");
   }
 } 
+op_type function_call_handler(char * name ,op_type args){
+  op_type res;
+  init_op_type(&res);
+  res.op=concat(name,"(",args.op,")",NULL);
+  res.preop=args.preop;
+  res.postop=args.postop;
+  return res;
+}
+
+local_type for_loop_handler(decl_type expr1,decl_type expr2,decl_type expr3,local_type codeblock){
+  local_type res=codeblock;
+  expr3.ops.op=concat(expr3.ops.op,";",NULL);
+  insert_n_s_list(&res.ops,expr3.ops.op,length_s_list(&res.ops)-1);
+  insert_first_s_list(&res.ops,concat("while","(",expr2.ops.op,") do",NULL));
+  expr1.ops.op=concat(expr1.ops.op,";",NULL);
+  insert_first_s_list(&res.ops,expr1.ops.op);
+  decl_list list;
+  list.type=expr1.type;
+  list.next=NULL;
+  list.ids=expr1.ids;
+  chain_decl_list(res.declarations,&list);
+  postfix_last_s_list(res.ops," ;");
+  return res;
+}
+
+

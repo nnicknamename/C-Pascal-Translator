@@ -76,9 +76,9 @@
 %type <rep> THREE TWO TYPE
 
 %type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT 
-%type <decl> SDEFINITION EXPRESSION LINE  
+%type <decl> SDEFINITION EXPRESSION LINE 
 
-%type <loc> LOCAL  CONDCODE CODEBLOCK CONDITIONALS WHILELOOP DOWHILE SWITCHCOND
+%type <loc> LOCAL CONDCODE CODEBLOCK CONDITIONALS FORLOOP WHILELOOP DOWHILE SWITCHCOND SWITCHINSIDE CASEAFTER  DEFAULT2 CASE1 CASE2 DEFAULT1
 %union{
   nb_modif modif;
   nb_vis vis;
@@ -99,7 +99,7 @@ CODE:
 GLOBAL:INCLUDES
   |DEFINES 
   |FUNCTION
-  |GLOBALDECLARATION EL  
+  |GLOBALDECLARATION EL  {fprintf(out,"var %s : %s ;\n",$1.ops.op,$1.type);}
   |TYPEDEFINITION EL
   |STRUCTURE EL
   |SIZEOFDEF EL 
@@ -158,19 +158,19 @@ X:X ',' X
   |LVALUE
   ;
 
-LOCAL: {init_local_type(&$$);}
+LOCAL:                {init_local_type(&$$);}
   |LOCAL LINE         {$$=$1;insert_decl_in_loc(&$$,$2);}
   |LOCAL CODEBLOCK    {chain_local(&$1,&$2);$$=$1;} 
   |LOCAL CONDITIONALS {chain_local(&$1,&$2);$$=$1;}
   |LOCAL WHILELOOP    {chain_local(&$1,&$2);$$=$1;}
   |LOCAL DOWHILE      {chain_local(&$1,&$2);$$=$1;}
-  |LOCAL FORLOOP      
+  |LOCAL FORLOOP      {chain_local(&$1,&$2);$$=$1;}
   |LOCAL SWITCHCOND   {chain_local(&$1,&$2);$$=$1;}
 ;
 
 LINE:EXPRESSION EL {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=strcmp($$.ops.op,"")?concat($$.ops.op,";",NULL):"";}  
   |RETURN EXPRESSION EL {$$=$2;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=concat("Exit(",$$.ops.op,");",NULL);}  
-  |BREAK EL
+  |BREAK EL         {$$.ops.op="break";$$.type="";$$.ids=NULL;}
   |STRUCTURE EL
   |TYPEDEFINITION EL
   |GOTODEF EL
@@ -180,33 +180,31 @@ LINE:EXPRESSION EL {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops
   |CONTINUE EL
 ;
 
-SWITCHCOND:SWITCH '('EXPRESSION')' '{'SWITCHINSIDE'}' 
+SWITCHCOND:SWITCH '('DEFINITION')' '{'SWITCHINSIDE'}' {$$=$6;insert_first_s_list(&$$.ops,concat("case ( ",$3.op," ) of ",NULL));insert_s_list(&$$.ops,"end ;");/*chain_s_list($3.preop,$$.ops);$$.ops=$3.preop;*/}
 ;
 
-SWITCHINSIDE: CASE1 SWITCHINSIDE
-  |DEFAULT1 CASEAFTER
-  |CASE2
-  |DEFAULT2
+SWITCHINSIDE: CASE1 SWITCHINSIDE {chain_local(&$1,&$2);$$=$1;}
+  |DEFAULT1 CASEAFTER {chain_local(&$1,&$2);$$=$1;}
+  |CASE1 {$$=$1;}
+  |DEFAULT2 {$$=$1;}
 ;
 
-CASEAFTER:CASE1 CASEAFTER
-  |CASE2
+CASEAFTER:CASE1 CASEAFTER {chain_local(&$2,&$1);$$=$2;}
+  |CASE1 {$$=$1;}
 ;
 
-CASE1:CASE VALUE':' LINE
-  |CASE VALUE':' 
-;
-
-CASE2:CASE VALUE':' LINE
-;
-DEFAULT1:DEFAULT ':' LINE
-  | DEFAULT':' 
-;
-DEFAULT2:DEFAULT ':' LINE
+CASE1:CASE VALUE':' LOCAL {$4.ops->op=concat($2,":",$4.ops->op,NULL);$$=$4;}
 ;
 
 
-FORLOOP:FOR '(' EXPRESSION EL EXPRESSION EL EXPRESSION')'CODEBLOCK
+DEFAULT1:DEFAULT ':' LOCAL {$$=$3;}
+;
+
+DEFAULT2:DEFAULT ':' LOCAL {$$=$3;}
+;
+
+
+FORLOOP:FOR '(' EXPRESSION EL EXPRESSION EL EXPRESSION')'CODEBLOCK {$$=for_loop_handler($3,$5,$7,$9);}
 ;
 
 EXPRESSION: DEFINITION  {$$.ops=$1;$$.type="";$$.ids=NULL;}
@@ -329,9 +327,9 @@ NAME:RVALUE {$$=$1;}
   |LVALUE {init_op_type(&$$);$$.op=$1;$$.postop=NULL;}
 ;
 
-RVALUE:BAND IDS           {init_op_type(&$$);$$.op=concat("@",$1,NULL);$$.postop=NULL;}
-  |IDS '(' ARGDEFINITION ')'{init_op_type(&$$);$$.op=concat($1,"(",$3.op,")",NULL);$$.preop=$3.preop;$$.postop=$3.postop;}
-  |IDS '('')'             {init_op_type(&$$);$$.op=concat($1,"(",")",NULL);$$.postop=NULL;}
+RVALUE:BAND IDS             {init_op_type(&$$);$$.op=concat("@",$2,NULL);$$.postop=NULL;}
+  |IDS '(' ARGDEFINITION ')'{$$=function_call_handler($1,$3);}
+  |IDS '('')'               {init_op_type(&$$);$$.op=concat($1,"(",")",NULL);$$.postop=NULL;}
 ;
 ARGDEFINITION:ARGDEFINITION ',' ARGDEFINITION {init_op_type(&$$);$$.op=concat($1.op," , ",$3.op,NULL);}
   |OPERATION {$$=$1;}
@@ -396,34 +394,34 @@ char* res;
       res=strdup(" := ");  
     break;
     case ASSADD :    
-      res=concat(" := ",lvalue,"+ ",NULL);
+      res=concat(" := ",lvalue," + ",NULL);
     break;
     case ASSMINUS : 
-      res=concat(" := ",lvalue,"- ",NULL);   
+      res=concat(" := ",lvalue," - ",NULL);   
     break;   
     case ASSMULT :  
-      res=concat(" := ",lvalue,"* ",NULL);   
+      res=concat(" := ",lvalue," * ",NULL);   
     break;   
     case ASSDIVIDE : 
-      res=concat(" := ",lvalue,"/ ",NULL);  
+      res=concat(" := ",lvalue," / ",NULL);  
     break;   
     case ASSMOD :    
-      res=concat(" := ",lvalue,"mod ",NULL); 
+      res=concat(" := ",lvalue," mod ",NULL); 
     break; 
     case ASSBAND :   
-      res=concat(" := ",lvalue,"& ",NULL);   
+      res=concat(" := ",lvalue," & ",NULL);   
     break; 
     case ASSBOR :    
-      res=concat(" := ",lvalue,"| ",NULL);   
+      res=concat(" := ",lvalue," | ",NULL);   
     break;   
     case ASSBXOR :   
-      res=concat(" := ",lvalue,"^ ",NULL);   
+      res=concat(" := ",lvalue," ^ ",NULL);   
     break;   
     case ASSLSHIFT : 
-      res=concat(" := ",lvalue,"<< ",NULL);  
+      res=concat(" := ",lvalue," << ",NULL);  
     break;   
     case ASSRSHIFT : 
-      res=concat(" := ",lvalue,">> ",NULL);  
+      res=concat(" := ",lvalue," >> ",NULL);  
     break;   
   }
   return res;

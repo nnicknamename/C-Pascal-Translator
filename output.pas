@@ -1,3 +1,5 @@
+var b,c : integer ;
+var r : real ;
 function minus ( x:real;y:real ) : real;
 var a : real ;
 BEGIN
@@ -15,11 +17,24 @@ begin
 			y := 1 + y; 
 		end 
 		until ( a < 100 ); 
+	end 
+	else 
+	begin 
+		b := 1 + b; 
 	end ; 
 end ; 
 Exit(a); 
 END;
-var l : integer ;
+var l , a , i : integer ;
 BEGIN
-l := 0; 
+l := 2435; 
+a := 0; 
+i := 0; 
+while(i < 10) do 
+begin 
+	a := a mod l; 
+	a := 1 + a; 
+	a := 1 + a; 
+	i := i + 1; 
+end ; 
 END.

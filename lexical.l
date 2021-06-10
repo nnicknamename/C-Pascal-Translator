@@ -10,7 +10,7 @@
     id_list *id_table=NULL;
 %}
 nl          "\n" 
-id          [a-zA-Z_][a-zA-Z0-9_]*
+id          [a-zA-Z_][a-zA-Z0-9_]*  
 string      \"[^\"]*\"
 coment      ("//".*)|("/*"([^*]|"*"[^/])*"*/")
 header      "<"[a-zA-Z0-9]+".h>"
