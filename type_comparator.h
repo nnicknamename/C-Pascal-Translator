@@ -10,8 +10,8 @@ const struct t_catch dect[]={
     {0,0,1,"int","integer"},        //int  
     {0,0,0,"int","cardinal"},       //unsigned int     
     {0,0,1,"char","shortint"},     //signed char 
-    {1,0,1,"int","small int"},      //short int 
-    {0,1,1,"int","long int"},       //long int 
+    {1,0,1,"int","smallint"},      //short int 
+    {0,1,1,"int","longint"},       //long int 
     {0,2,1,"int","int64"},          //long long int
     {0,0,0,"char","byte"},          //unsigned char 
     {1,0,0,"int","word"},           //unsigned short int 

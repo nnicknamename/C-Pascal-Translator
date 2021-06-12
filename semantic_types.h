@@ -63,5 +63,24 @@ struct local_type{
 };
 typedef struct local_type local_type;
 
+enum lval_type{
+  simple=0,
+  array=1,
+  pointer=2
+};
+
+struct lval_def{
+  char *id;
+  s_list *dimentions;
+  int type;
+};
+typedef struct lval_def lval_def;
+
+struct lval_list{
+    lval_def lval;
+    struct lval_list* next;
+};
+typedef struct lval_list lval_list;
+
 FILE *out;
 

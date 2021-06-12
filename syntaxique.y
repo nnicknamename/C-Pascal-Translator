@@ -22,8 +22,6 @@
     extern FILE *yyin;
     extern id_list *id_table;
     char lang;
-
-
 %}
 /*KeyWords*/
 %token DEFINE INCLUDE AUTO STRUCT DOUBLE INT LONG SHORT CHAR FLOAT
@@ -55,7 +53,7 @@
 %token END
 %left ELSE
 
-%right'=' ASSADD ASSMINUS ASSMULT ASSDIVIDE ASSMOD ASSBAND ASSBOR ASSBXOR ASSLSHIFT ASSRSHIFT
+%right'=' ASSADD ASSMINUS ASSMULT ASSDIVIDE ASSMOD ASSBAND ASSBOR ASSBXOR ASSLSHIFT ASSRSHIFT 
 %left OR 
 %left AND
 %left BOR
@@ -68,18 +66,26 @@
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
 
-%type <code> ARGS LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR LVALUE  STAR VALUE GOTODEF LABEL BASICTYPE IDS
+%type <code> ARGS LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR STAR VALUE GOTODEF LABEL BASICTYPE IDS
 %type <t_val> ASSIGNMENTOP
-%type <op> GLOBALDEFINITION DEFINITION ARGDEFINITION OPERATION  ASSIGNMENT GLOBALOPERATION GLOBALASSIGNMENT NAME RVALUE
+%type <op> DEFINITION ARGDEFINITION OPERATION  ASSIGNMENT GLOBALOPERATION GLOBALASSIGNMENT NAME RVALUE
 %type <modif> MODIFIER
 %type <vis> VISIBILITY 
 %type <rep> THREE TWO TYPE
 
-%type <decl> DECLARATION GLOBALDECLARATION SASSIGNMENT 
+%type <lval> LVALUE
+
+%type <exp> ARRAYDIM
+%type <lvallist> GLOBALDEFINITION
+%type <decllist> GLOBALDECLARATION
+%type <decl> DECLARATION  SASSIGNMENT 
 %type <decl> SDEFINITION EXPRESSION LINE 
 
 %type <loc> LOCAL CONDCODE CODEBLOCK CONDITIONALS FORLOOP WHILELOOP DOWHILE SWITCHCOND SWITCHINSIDE CASEAFTER  DEFAULT2 CASE1 CASE2 DEFAULT1
 %union{
+  decl_list decllist;
+  lval_list lvallist;
+  lval_def lval;
   nb_modif modif;
   nb_vis vis;
   type_rep rep;
@@ -88,7 +94,7 @@
   decl_type decl;
   char *code;
   int t_val;
-  s_list *exp;
+  s_list exp;
 }
 %start CODE
 %%
@@ -99,7 +105,7 @@ CODE:
 GLOBAL:INCLUDES
   |DEFINES 
   |FUNCTION
-  |GLOBALDECLARATION EL  {fprintf(out,"var %s : %s ;\n",$1.ops.op,$1.type);}
+  |GLOBALDECLARATION EL  {fprint_decl_list(&$1);}
   |TYPEDEFINITION EL
   |STRUCTURE EL
   |SIZEOFDEF EL 
@@ -132,24 +138,31 @@ INCLUDES:'#' INCLUDE HEAD
 DEFINES:'#' DEFINE ID VALUE
 ;
 
-FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprint_functions($1,$2,$4,$7);}
+FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprint_functions($1,$2.id,$4,$7);}
 ;
 
-LVALUE:STAR LVALUE {$$=concat($1,$2,NULL);}
-  |ID {$$=$1;}
-  |ID'['OPERATION']'{$$=concat("[",$3.op,"]",NULL);}
+LVALUE:STAR LVALUE {$$=$2;$$.id=concat($1,$$.id,NULL);}
+  |ID {$$.id=$1;$$.type=simple;$$.dimentions=NULL;}
+  |ID ARRAYDIM{$$.id=$1;$$.type=array;$$.dimentions=&$2;}
+;
+
+ARRAYDIM:ARRAYDIM ARRAYDIM {chain_s_list(&$1,&$2);$$=$1;}
+  |'['OPERATION']'{$$.op=$2.op;$$.next_op=NULL;}
+
 ;
 
 ARGS:{$$="";}
-  |TYPE LVALUE ',' ARGS {$$=concat($2,":",convert_type($1),";",$4,NULL);}
-  |TYPE LVALUE {$$=concat($2,":",convert_type($1),NULL);}
+  |TYPE LVALUE ',' ARGS {$$=concat($2.id,":",convert_type($1),";",$4,NULL);}
+  |TYPE LVALUE {$$=concat($2.id,":",convert_type($1),NULL);}
 ;
+
 TYPEDEFINITION:TYPEDEF TYPE LVALUE
-  |TYPEDEF STRUCTURE LVALUE 
+  |TYPEDEF STRUCTURE LVALUE
 ;
 
 STRUCTURE: STRUCT ID '{'DECLARATIONSTRUCTURE'}'
 ;
+
 DECLARATIONSTRUCTURE:
   |TYPE X EL DECLARATIONSTRUCTURE
 ;
@@ -228,7 +241,7 @@ WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,c
 DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL {$$=$2;insert_first_s_list(&$$.ops,"repeat");insert_s_list(&$$.ops,concat("until ( ",$5.op," );",NULL));}
 ;
 
-GLOBALDECLARATION: TYPE GLOBALDEFINITION  {$$.type=convert_type($1);$$.ops=$2;}
+GLOBALDECLARATION: TYPE GLOBALDEFINITION  {printf("tesst\n");$$=declaration_handler($1,$2);  }
 ;
 
 DECLARATION:TYPE SDEFINITION {$$=$2;$$.type=convert_type($1);}
@@ -236,19 +249,19 @@ DECLARATION:TYPE SDEFINITION {$$=$2;$$.type=convert_type($1);}
 
 SDEFINITION:SDEFINITION ',' SDEFINITION {init_op_type(&$$.ops);$$.ops.op=$3.ops.op;insert_s_list(&$1.ops.preop,$1.ops.op);chain_s_list($$.ops.preop,$1.ops.preop);chain_s_list($$.ops.preop,$1.ops.postop);chain_s_list($$.ops.preop,$3.ops.preop);chain_s_list($$.ops.postop,$3.ops.postop);$$.ids=$1.ids;chain_s_list($$.ids,$3.ids);}
   |SASSIGNMENT {$$=$1;}
-  |LVALUE {init_op_type(&$$.ops);$$.ops.op="";$$.ops.postop=NULL;$$.ids=insert_s_list(&$$.ids,$1);}
+  |LVALUE {init_op_type(&$$.ops);$$.ops.op="";$$.ops.postop=NULL;$$.ids=insert_s_list(&$$.ids,$1.id);}
 ;
 
-SASSIGNMENT:LVALUE '=' OPERATION {$$.ops.op=concat($1,convert_assignment($1,-1),$3.op,NULL);
-$$.ops.preop=$3.preop;$$.ops.postop=$3.postop;$$.ids=insert_s_list(&$$.ids,$1);}
+SASSIGNMENT:LVALUE '=' OPERATION {$$.ops.op=concat($1.id,convert_assignment($1.id,-1),$3.op,NULL);
+$$.ops.preop=$3.preop;$$.ops.postop=$3.postop;$$.ids=insert_s_list(&$$.ids,$1.id);}
 ;
 
-GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION {init_op_type(&$$);$$.op=concat($1.op,",",$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
-  |GLOBALASSIGNMENT {$$=$1;}
-  |LVALUE {init_op_type(&$$);$$.op=$1;$$.postop=NULL;}
+GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION {print_s_list($$.lval.dimentions,",");chain_lval_list(&$3,&$1);$$=$3;}
+  |GLOBALASSIGNMENT {$$.lval.id=$1.op;$$.next=NULL;}
+  |LVALUE {$$.lval=$1;$$.next=NULL;}
 ;
 
-GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION {$$.op=concat($1," =: ",$3.op,NULL);$$.preop=$3.preop;$$.postop=$3.postop;}
+GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION {$$.op=concat($1.id," =: ",$3.op,NULL);$$.preop=$3.preop;$$.postop=$3.postop;}
 ;
 
 GLOBALOPERATION:GLOBALOPERATION OPERATOR GLOBALOPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
@@ -263,7 +276,7 @@ DEFINITION:DEFINITION ',' DEFINITION {init_op_type(&$$);$$.op=$3.op;insert_s_lis
   |ASSIGNMENT {$$=$1;}
 ;
 
-ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$.op=concat($1,convert_assignment($1,$2),$3.op,NULL);
+ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$.op=concat($1.id,convert_assignment($1.id,$2),$3.op,NULL);
 $$.preop=$3.preop;$$.postop=$3.postop;}
 ;
 
@@ -284,10 +297,10 @@ OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,
   |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
   |VALUE         {init_op_type(&$$);$$.op=$1;$$.postop=NULL;$$.preop=NULL;$$.simple=0;}
   |NAME          {$$=$1;$$.simple=0;}
-  |INCR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 + ",$2,NULL));$$.op=strdup($2);}
-  |DECR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2," := 1 - ",$2,NULL));$$.op=strdup($2);}  
-  |LVALUE INCR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 + ",$1,NULL));$$.op=strdup($1);}
-  |LVALUE DECR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1," := 1 - ",$1,NULL));$$.op=strdup($1);}                      
+  |INCR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2.id," := 1 + ",$2.id,NULL));$$.op=strdup($2.id);}
+  |DECR LVALUE   {init_op_type(&$$);insert_s_list(&$$.preop,concat($2.id," := 1 - ",$2.id,NULL));$$.op=strdup($2.id);}  
+  |LVALUE INCR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1.id," := 1 + ",$1.id,NULL));$$.op=strdup($1.id);}
+  |LVALUE DECR   {init_op_type(&$$);insert_s_list(&$$.postop,concat($1.id," := 1 - ",$1.id,NULL));$$.op=strdup($1.id);}                      
   |SIZEOFDEF
 ;
 
@@ -323,8 +336,9 @@ BITWISE:BAND        {$$=" & ";}
   |LSHIFT           {$$=" shl ";}
   |RSHIFT           {$$=" shr ";}
 ;
+
 NAME:RVALUE {$$=$1;}
-  |LVALUE {init_op_type(&$$);$$.op=$1;$$.postop=NULL;}
+  |LVALUE {init_op_type(&$$);$$.op=$1.id;$$.postop=NULL;}
 ;
 
 RVALUE:BAND IDS             {init_op_type(&$$);$$.op=concat("@",$2,NULL);$$.postop=NULL;}

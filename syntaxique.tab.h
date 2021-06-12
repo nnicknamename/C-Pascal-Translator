@@ -127,8 +127,11 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 82 "syntaxique.y" /* yacc.c:1909  */
+#line 85 "syntaxique.y" /* yacc.c:1909  */
 
+  decl_list decllist;
+  lval_list lvallist;
+  lval_def lval;
   nb_modif modif;
   nb_vis vis;
   type_rep rep;
@@ -137,9 +140,9 @@ union YYSTYPE
   decl_type decl;
   char *code;
   int t_val;
-  s_list *exp;
+  s_list exp;
 
-#line 143 "syntaxique.tab.h" /* yacc.c:1909  */
+#line 146 "syntaxique.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
