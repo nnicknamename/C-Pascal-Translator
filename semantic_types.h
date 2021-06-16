@@ -63,6 +63,10 @@ struct local_type{
 };
 typedef struct local_type local_type;
 
+
+
+
+
 enum lval_type{
   simple=0,
   array=1,
@@ -82,5 +86,24 @@ struct lval_list{
 };
 typedef struct lval_list lval_list;
 
-FILE *out;
 
+//list of definitions including a list of the declared lvals and the operations
+struct def_list
+{
+  lval_list lvals;
+  op_type ops;
+};
+typedef struct def_list def_list;
+
+
+struct decl_op_list
+{
+  decl_list *declarations;
+  op_type ops;
+};
+typedef struct decl_op_list decl_op_list;
+
+
+FILE *out;
+local_type main_local;
+s_list *main_inits;

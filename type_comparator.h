@@ -9,7 +9,7 @@ typedef  struct t_catch{
 const struct t_catch dect[]={
     {0,0,1,"int","integer"},        //int  
     {0,0,0,"int","cardinal"},       //unsigned int     
-    {0,0,1,"char","shortint"},     //signed char 
+    {0,0,1,"char","char"},     //signed char 
     {1,0,1,"int","smallint"},      //short int 
     {0,1,1,"int","longint"},       //long int 
     {0,2,1,"int","int64"},          //long long int

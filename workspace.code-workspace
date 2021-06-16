@@ -6,7 +6,16 @@
 	],
 	"settings": {
 		"files.associations": {
-			"stdio.h": "c"
+			"stdio.h": "c",
+			"cctype": "c",
+			"cmath": "c",
+			"cstdarg": "c",
+			"cstdio": "c",
+			"cstdlib": "c",
+			"limits": "c",
+			"*.tcc": "c",
+			"type_traits": "c",
+			"typeinfo": "c"
 		}
 	}
 }

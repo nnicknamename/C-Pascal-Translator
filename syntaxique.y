@@ -8,6 +8,8 @@
     #include "type_comparator.h"
     #include "compilateurE/generator.h"   
     #define YYERROR_VERBOSE
+
+    //s_list init_list;
     s_list * insert_s_list(s_list **head,char *operation);
     char* concat(const char * args,...);
     void fprint_s_list(s_list *head,char *separator);
@@ -77,12 +79,16 @@
 
 %type <exp> ARRAYDIM
 %type <lvallist> GLOBALDEFINITION
-%type <decllist> GLOBALDECLARATION
-%type <decl> DECLARATION  SASSIGNMENT 
-%type <decl> SDEFINITION EXPRESSION LINE 
+%type <decllist> GLOBALDECLARATION 
+
+%type <dop_list>DECLARATION EXPRESSION LINE
+
+%type <defl> SDEFINITION SASSIGNMENT
 
 %type <loc> LOCAL CONDCODE CODEBLOCK CONDITIONALS FORLOOP WHILELOOP DOWHILE SWITCHCOND SWITCHINSIDE CASEAFTER  DEFAULT2 CASE1 CASE2 DEFAULT1
 %union{
+  decl_op_list dop_list;
+  def_list defl;
   decl_list decllist;
   lval_list lvallist;
   lval_def lval;
@@ -94,12 +100,12 @@
   decl_type decl;
   char *code;
   int t_val;
-  s_list exp;
+  s_list *exp;
 }
 %start CODE
 %%
 CODE:
-  |END {YYACCEPT;}
+  |END {generate_main();YYACCEPT;}
   |GLOBAL CODE
 ;   
 GLOBAL:INCLUDES
@@ -143,12 +149,11 @@ FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprint_functions($1,$2.id,$4,$7
 
 LVALUE:STAR LVALUE {$$=$2;$$.id=concat($1,$$.id,NULL);}
   |ID {$$.id=$1;$$.type=simple;$$.dimentions=NULL;}
-  |ID ARRAYDIM{$$.id=$1;$$.type=array;$$.dimentions=&$2;}
+  |ID ARRAYDIM{$$.id=$1;$$.type=array;$$.dimentions=$2;}
 ;
 
-ARRAYDIM:ARRAYDIM ARRAYDIM {chain_s_list(&$1,&$2);$$=$1;}
-  |'['OPERATION']'{$$.op=$2.op;$$.next_op=NULL;}
-
+ARRAYDIM:ARRAYDIM ARRAYDIM {chain_s_list($1,$2);$$=$1;}
+  |'['OPERATION']' {$$=malloc(sizeof(s_list));insert_s_list(&$$,concat("0..",$2.op,NULL));}
 ;
 
 ARGS:{$$="";}
@@ -172,7 +177,7 @@ X:X ',' X
   ;
 
 LOCAL:                {init_local_type(&$$);}
-  |LOCAL LINE         {$$=$1;insert_decl_in_loc(&$$,$2);}
+  |LOCAL LINE         {$$=$1;chain_decl_list($$.declarations,$2.declarations);chain_s_list($$.ops,$2.ops.preop);insert_s_list(&$$.ops,$2.ops.op);chain_s_list($$.ops,$2.ops.postop);}
   |LOCAL CODEBLOCK    {chain_local(&$1,&$2);$$=$1;} 
   |LOCAL CONDITIONALS {chain_local(&$1,&$2);$$=$1;}
   |LOCAL WHILELOOP    {chain_local(&$1,&$2);$$=$1;}
@@ -181,13 +186,13 @@ LOCAL:                {init_local_type(&$$);}
   |LOCAL SWITCHCOND   {chain_local(&$1,&$2);$$=$1;}
 ;
 
-LINE:EXPRESSION EL {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=strcmp($$.ops.op,"")?concat($$.ops.op,";",NULL):"";}  
+LINE:EXPRESSION EL      {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=strcmp($$.ops.op,"")?concat($$.ops.op,";",NULL):"";}  
   |RETURN EXPRESSION EL {$$=$2;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=concat("Exit(",$$.ops.op,");",NULL);}  
-  |BREAK EL         {$$.ops.op="break";$$.type="";$$.ids=NULL;}
+  |BREAK EL             {$$.ops.op="break";}
   |STRUCTURE EL
   |TYPEDEFINITION EL
   |GOTODEF EL
-  |LABEL               {$$.ops.op=$1;$$.type="";$$.ids=NULL;}
+  |LABEL                {$$.ops.op=$1;}
   |ENUMDEF EL
   |UNIONDEF EL
   |CONTINUE EL
@@ -216,15 +221,14 @@ DEFAULT1:DEFAULT ':' LOCAL {$$=$3;}
 DEFAULT2:DEFAULT ':' LOCAL {$$=$3;}
 ;
 
-
 FORLOOP:FOR '(' EXPRESSION EL EXPRESSION EL EXPRESSION')'CODEBLOCK {$$=for_loop_handler($3,$5,$7,$9);}
 ;
 
-EXPRESSION: DEFINITION  {$$.ops=$1;$$.type="";$$.ids=NULL;}
+EXPRESSION:DEFINITION {$$.ops=$1;$$.declarations=NULL;}
   |DECLARATION {$$=$1;}
 ;
 
-CODEBLOCK:  '{' LOCAL '}' {insert_first_s_list(&$2.ops,"begin");insert_s_list(&$2.ops,"end");$$=$2;}
+CODEBLOCK:'{' LOCAL '}' {insert_first_s_list(&$2.ops,"begin");insert_s_list(&$2.ops,"end");$$=$2;}
 ;
 
 CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("if ( ",$3.op," ) then ",NULL));postfix_last_s_list($$.ops," ;");/*chain_s_list($3.preop,$$.ops);$$.ops=$3.preop;*/}
@@ -232,7 +236,7 @@ CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,c
 ;
 
 CONDCODE:CODEBLOCK {$$=$1;}
-  |LINE {init_local_type(&$$);insert_decl_in_loc(&$$,$1);insert_first_s_list(&$$.ops,"begin");insert_s_list(&$$.ops,"end");}
+  |LINE {init_local_type(&$$);chain_decl_list($$.declarations,$1.declarations);insert_first_s_list(&$$.ops,"begin");insert_s_list(&$$.ops,"end");}
 ;
 
 WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("while ( ",$3.op," ) do ",NULL));postfix_last_s_list($$.ops," ;");}
@@ -241,34 +245,46 @@ WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,c
 DOWHILE:DO CONDCODE WHILE '(' DEFINITION ')' EL {$$=$2;insert_first_s_list(&$$.ops,"repeat");insert_s_list(&$$.ops,concat("until ( ",$5.op," );",NULL));}
 ;
 
-GLOBALDECLARATION: TYPE GLOBALDEFINITION  {printf("tesst\n");$$=declaration_handler($1,$2);  }
+GLOBALDECLARATION: TYPE GLOBALDEFINITION  {$$=declaration_handler($1,$2);}
 ;
 
-DECLARATION:TYPE SDEFINITION {$$=$2;$$.type=convert_type($1);}
+DECLARATION:TYPE SDEFINITION {*$$.declarations=declaration_handler($1,$2.lvals);$$.ops=$2.ops;}
 ;
 
-SDEFINITION:SDEFINITION ',' SDEFINITION {init_op_type(&$$.ops);$$.ops.op=$3.ops.op;insert_s_list(&$1.ops.preop,$1.ops.op);chain_s_list($$.ops.preop,$1.ops.preop);chain_s_list($$.ops.preop,$1.ops.postop);chain_s_list($$.ops.preop,$3.ops.preop);chain_s_list($$.ops.postop,$3.ops.postop);$$.ids=$1.ids;chain_s_list($$.ids,$3.ids);}
-  |SASSIGNMENT {$$=$1;}
-  |LVALUE {init_op_type(&$$.ops);$$.ops.op="";$$.ops.postop=NULL;$$.ids=insert_s_list(&$$.ids,$1.id);}
+SDEFINITION:SDEFINITION ',' SDEFINITION {init_op_type(&$$.ops);
+    $$.ops.op=$3.ops.op;
+    insert_s_list(&$1.ops.preop,$1.ops.op);
+    chain_s_list($$.ops.preop,$1.ops.preop);
+    chain_s_list($$.ops.preop,$1.ops.postop);
+    chain_s_list($$.ops.preop,$3.ops.preop);
+    chain_s_list($$.ops.postop,$3.ops.postop);
+    chain_lval_list(&$1.lvals,&$3.lvals);
+    $$.lvals=$1.lvals;
+  }
+  |SASSIGNMENT{$$=$1;}
+  |LVALUE     {init_op_type(&$$.ops);$$.ops.op="";$$.ops.postop=NULL;$$.lvals.lval=$1;$$.lvals.next=NULL;}
+;
+SASSIGNMENT:LVALUE '=' OPERATION 
+{$$.ops.op=concat($1.id,convert_assignment($1.id,-1),$3.op,NULL);
+$$.ops.preop=$3.preop;
+$$.ops.postop=$3.postop;
+$$.lvals.lval=$1;
+$$.lvals.next=NULL;}
 ;
 
-SASSIGNMENT:LVALUE '=' OPERATION {$$.ops.op=concat($1.id,convert_assignment($1.id,-1),$3.op,NULL);
-$$.ops.preop=$3.preop;$$.ops.postop=$3.postop;$$.ids=insert_s_list(&$$.ids,$1.id);}
-;
-
-GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION {print_s_list($$.lval.dimentions,",");chain_lval_list(&$3,&$1);$$=$3;}
+GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION {$$=$1;chain_lval_list(&$$,&$3);}
   |GLOBALASSIGNMENT {$$.lval.id=$1.op;$$.next=NULL;}
-  |LVALUE {$$.lval=$1;$$.next=NULL;}
+  |LVALUE {$$.lval=$1;$$.next=NULL;print_s_list($$.lval.dimentions,"  ,");printf("kkk%s\n",$$.lval.id);}
 ;
 
-GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION {$$.op=concat($1.id," =: ",$3.op,NULL);$$.preop=$3.preop;$$.postop=$3.postop;}
+GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION {$$.op=$1.id;insert_s_list(&main_inits,concat($1.id," := ",$3.op,";",NULL));$$.preop=$3.preop;$$.postop=$3.postop;}
 ;
 
 GLOBALOPERATION:GLOBALOPERATION OPERATOR GLOBALOPERATION {init_op_type(&$$);$$.op=concat($1.op,$2,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);}
   |'('GLOBALOPERATION')' {$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
   |ID         {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
   |VALUE      {init_op_type(&$$);$$.op=strdup($1);$$.postop=NULL;}
-  |SIZEOFDEF
+  |SIZEOFDEF  
 ;
 
 DEFINITION:DEFINITION ',' DEFINITION {init_op_type(&$$);$$.op=$3.op;insert_s_list(&$1.preop,$1.op);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$1.postop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$3.postop);}

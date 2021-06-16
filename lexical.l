@@ -4,7 +4,9 @@
     #include "semantic_types.h"  
     #include "id_checker.h"
     #include "syntaxique.tab.h"
+    extern char* concat(const char * args,...);
     int numberLines(char* str);
+    char *tr_string(char *string);
     int line=1;
     int errorNum=0;
     id_list *id_table=NULL;
@@ -56,7 +58,7 @@ real        {digit}+"."{digit}+
 "continue"  {return(CONTINUE);}
 
 {id}        {yylval.code=(char *)get_p_id(&id_table,strdup(yytext));return(ID);}
-{string}    {yylval.code=(char *)strdup(yytext);line+=numberLines(yytext);return(VALSTR);}
+{string}    {yylval.code=(char *)strdup(tr_string(yytext));line+=numberLines(yytext);return(VALSTR);}
 {coment}    {line+=numberLines(yytext);}
 {character} {yylval.code=(char *)strdup(yytext);return(VALCHAR);}
 {header}    {return(HEAD);}
@@ -123,6 +125,15 @@ real        {digit}+"."{digit}+
 [ \t]+
 .           {errorNum++;printf("Lexical error at line %d\n",line);}
 %%
+
+char *tr_string(char *string){
+    char *res=malloc(sizeof(char)*strlen(string)-2);
+    string++;
+    strncpy(res,string,strlen(string)-1);
+    res=concat("'",res,"'",NULL);
+    return res;
+}
+
 int numberLines(char* str){
     int result=0;
     char s=' ';

@@ -1,7 +1,7 @@
 comp: syntaxique.tab.c lex.yy.c compilateurE/libErr.a
 	gcc  syntaxique.tab.c  lex.yy.c -LcompilateurE  -lErr -lfl -g -o comp
 	
-syntaxique.tab.c: syntaxique.y compilateurE/generator.h type_comparator.h semantic.h
+syntaxique.tab.c: syntaxique.y compilateurE/generator.h type_comparator.h semantic_types.h semantic.h
 	bison -d -x syntaxique.y 
 
 lex.yy.c: lexical.l syntaxique.tab.h semantic.h semantic_types.h id_checker.h

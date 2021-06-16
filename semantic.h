@@ -1,5 +1,6 @@
 #include "semantic_types.h"
 
+
 //operations semantics 
 char* concat(const char * args,...);
 char* convert_type(type_rep type);
@@ -321,7 +322,7 @@ void chain_local(local_type *local1,local_type *local2){
   chain_decl_list(local1->declarations,local2->declarations);
 }
 
-void print_types( local_type local){
+void print_types(local_type local){
   decl_list *temp=local.declarations;
   while(temp!=NULL){
     print_s_list(temp->ids,", ");
@@ -354,12 +355,23 @@ void fprint_functions(type_rep type,char * name,char *args,local_type local){
     fprint_s_list(local.ops,"\n");
     fprintf(out,"\nEND;\n");
   }else{
-    fprint_types(local);
+
+    main_local=local;
+/*    fprint_types(local);
     fprintf(out,"BEGIN\n");
     fprint_s_list(local.ops,"\n");
-    fprintf(out,"\nEND.\n");
+    fprintf(out,"\nEND.\n");*/
   }
 } 
+
+void generate_main(){
+    fprint_types(main_local);
+    fprintf(out,"BEGIN\n");
+    fprint_s_list(main_inits,"\n");
+    fprintf(out,"\n");
+    fprint_s_list(main_local.ops,"\n");
+    fprintf(out,"\nEND.\n");
+}
 
 op_type function_call_handler(char * name ,op_type args){
   op_type res;
@@ -370,25 +382,32 @@ op_type function_call_handler(char * name ,op_type args){
   return res;
 }
 
-char *serialize_op(decl_type decl){
-  postfix_s_list(decl.ops.preop,";");
-  postfix_s_list(decl.ops.postop,";");
-  decl.ops.op=strcmp(decl.ops.op,"")?concat(decl.ops.op,";",NULL):"";
-  insert_s_list(&decl.ops.preop,decl.ops.op);
-  decl.ops.op=concat(sprint_s_list(decl.ops.preop,""),sprint_s_list(decl.ops.postop,";"),NULL);
-  return  decl.ops.op;
+char *serialize_op(op_type decl){
+  postfix_s_list(decl.preop,";");
+  postfix_s_list(decl.postop,";");
+  decl.op=strcmp(decl.op,"")?concat(decl.op,";",NULL):"";
+  insert_s_list(&decl.preop,decl.op);
+  decl.op=concat(sprint_s_list(decl.preop,""),sprint_s_list(decl.postop,";"),NULL);
+  return  decl.op;
 }
 
-local_type for_loop_handler(decl_type expr1,decl_type expr2,decl_type expr3,local_type codeblock){
-  local_type res=codeblock;
-  insert_n_s_list(&res.ops,serialize_op(expr3),length_s_list(&res.ops)-1);
+
+local_type for_loop_handler(decl_op_list expr1,decl_op_list expr2,decl_op_list expr3,local_type codeblock){
+  local_type res=codeblock;  
+
+  //insert the incrementation part at the end of the loop 
+  insert_n_s_list(&res.ops,serialize_op(expr3.ops),length_s_list(&res.ops)-1);
+  //insert the loop header at the begining of the list 
   insert_first_s_list(&res.ops,concat("while","(",expr2.ops.op,") do",NULL));
-  insert_first_s_list(&res.ops,serialize_op(expr1));
-  decl_list list;
-  list.type=expr1.type;
-  list.next=NULL;
-  list.ids=expr1.ids;
-  chain_decl_list(res.declarations,&list);
+  //put the declaration on top of the loop 
+  insert_first_s_list(&res.ops,serialize_op(expr1.ops));
+
+  //chain the declarations of all the parts 
+  chain_decl_list(res.declarations,expr1.declarations);
+  chain_decl_list(res.declarations,expr2.declarations);
+  chain_decl_list(res.declarations,expr3.declarations);
+
+  //put ; at the end of the loop
   postfix_last_s_list(res.ops," ;");
   return res;
 }
@@ -446,16 +465,17 @@ decl_list declaration_handler(type_rep type,lval_list lvals){
 
 void fprint_decl_list(decl_list *list){
   decl_list *temp=list;
+
   int first=1;
   while(temp!=NULL){
-    printf("test\n");
+    printf("expressionr\n");
     if(strcmp(temp->type,"")){
       if(first){
-        fprintf(out,"var ");
+        printf("var ");
         first=0;
       }
-      fprint_s_list(temp->ids,", ");
-      fprintf(out,": %s ;\n",temp->type);
+      print_s_list(temp->ids,", ");
+      printf(": %s ;\n",temp->type);
     }
     temp=temp->next;
   }
