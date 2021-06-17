@@ -30,14 +30,14 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_SYNTAXIQUE_TAB_H_INCLUDED
-# define YY_YY_SYNTAXIQUE_TAB_H_INCLUDED
+#ifndef YY_XX_FUNC_TRANS_TAB_H_INCLUDED
+# define YY_XX_FUNC_TRANS_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
 #endif
 #if YYDEBUG
-extern int yydebug;
+extern int xxdebug;
 #endif
 
 /* Token type.  */
@@ -45,80 +45,26 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    DEFINE = 258,
-    INCLUDE = 259,
-    AUTO = 260,
-    STRUCT = 261,
-    DOUBLE = 262,
-    INT = 263,
-    LONG = 264,
-    SHORT = 265,
-    CHAR = 266,
-    FLOAT = 267,
-    CONST = 268,
-    SIGNED = 269,
-    SIZEOF = 270,
-    TYPEDEF = 271,
-    RETURN = 272,
-    VOID = 273,
-    STATIC = 274,
-    UNSIGNED = 275,
-    ENUM = 276,
-    EXTERN = 277,
-    REGISTER = 278,
-    UNION = 279,
-    VOLATILE = 280,
-    WHILE = 281,
-    DO = 282,
-    FOR = 283,
-    IF = 284,
-    ELSE = 285,
-    SWITCH = 286,
-    CASE = 287,
-    BREAK = 288,
-    DEFAULT = 289,
-    GOTO = 290,
-    CONTINUE = 291,
-    VALINT = 292,
-    VALREAL = 293,
-    VALCHAR = 294,
-    VALSTR = 295,
-    ID = 296,
-    ADD = 297,
-    MINUS = 298,
-    MULT = 299,
-    DIVIDE = 300,
-    MOD = 301,
-    INCR = 302,
-    DECR = 303,
-    EQUAL = 304,
-    DIF = 305,
-    SUP = 306,
-    INF = 307,
-    SUPEQ = 308,
-    INFEQ = 309,
-    AND = 310,
-    OR = 311,
-    NOT = 312,
-    BAND = 313,
-    BOR = 314,
-    BXOR = 315,
-    BOC = 316,
-    LSHIFT = 317,
-    RSHIFT = 318,
-    ASSADD = 319,
-    ASSMINUS = 320,
-    ASSMULT = 321,
-    ASSDIVIDE = 322,
-    ASSMOD = 323,
-    ASSBAND = 324,
-    ASSBOR = 325,
-    ASSBXOR = 326,
-    ASSLSHIFT = 327,
-    ASSRSHIFT = 328,
-    EL = 329,
-    HEAD = 330,
-    END = 331
+    TEXT = 258,
+    PC = 259,
+    PD = 260,
+    PE = 261,
+    PF = 262,
+    PI = 263,
+    PO = 264,
+    PS = 265,
+    PU = 266,
+    PX = 267,
+    PP = 268,
+    SA = 269,
+    SB = 270,
+    SF = 271,
+    SN = 272,
+    SR = 273,
+    ST = 274,
+    SV = 275,
+    SS = 276,
+    END = 277
   };
 #endif
 
@@ -127,25 +73,12 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 90 "syntaxique.y" /* yacc.c:1909  */
+#line 25 "func_trans.y" /* yacc.c:1909  */
 
-  decl_op_list dop_list;
-  def_list defl;
-  decl_list decllist;
-  lval_list lvallist;
-  lval_def lval;
-  nb_modif modif;
-  nb_vis vis;
-  type_rep rep;
-  op_type op;
-  local_type loc;
-  decl_type decl;
-  char *code;
-  int t_val;
-  s_list *exp;
-  int ctr;
+  char * string ;
+  func_rep *func;
 
-#line 149 "syntaxique.tab.h" /* yacc.c:1909  */
+#line 82 "func_trans.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -154,8 +87,8 @@ typedef union YYSTYPE YYSTYPE;
 #endif
 
 
-extern YYSTYPE yylval;
+extern YYSTYPE xxlval;
 
-int yyparse (void);
+int xxparse (void);
 
-#endif /* !YY_YY_SYNTAXIQUE_TAB_H_INCLUDED  */
+#endif /* !YY_XX_FUNC_TRANS_TAB_H_INCLUDED  */

@@ -1,5 +1,5 @@
 #include "semantic_types.h"
-
+#include "function_translator/func_trans.h"
 
 //operations semantics 
 char* concat(const char * args,...);
@@ -77,7 +77,15 @@ void postfix_s_list(s_list *head,char *postfix){
       temp=temp->next_op;
     }
 }
-
+void prefix_s_list(s_list *head,char *prefix){
+  s_list *temp=head;
+    while(temp!=NULL){
+      if(temp->op!=NULL && strcmp(temp->op,"")){
+        temp->op=concat(prefix,temp->op,NULL);
+      }
+      temp=temp->next_op;
+    }
+}
 void postfix_last_s_list(s_list *head,char *postfix){
   s_list *temp=head;
     while(temp!=NULL){
@@ -355,7 +363,6 @@ void fprint_functions(type_rep type,char * name,char *args,local_type local){
     fprint_s_list(local.ops,"\n");
     fprintf(out,"\nEND;\n");
   }else{
-
     main_local=local;
 /*    fprint_types(local);
     fprintf(out,"BEGIN\n");
@@ -376,7 +383,11 @@ void generate_main(){
 op_type function_call_handler(char * name ,op_type args){
   op_type res;
   init_op_type(&res);
-  res.op=concat(name,"(",args.op,")",NULL);
+  if(strncmp(name,"printf",6)==0){
+    res.op=generate_function(concat("write(",args.op,");",NULL));
+  }else{
+    res.op=concat(name,"(",args.op,");",NULL);
+  }
   res.preop=args.preop;
   res.postop=args.postop;
   return res;
@@ -391,6 +402,15 @@ char *serialize_op(op_type decl){
   return  decl.op;
 }
 
+char * generate_name_lval(lval_def lval){
+  char * res;
+  if(lval.type==simple){
+    res=lval.id;
+  }else{
+    res=concat(lval.id,"[",sprint_s_list(lval.dimentions," ,"),"]",NULL);
+  }
+  return res;
+}
 
 local_type for_loop_handler(decl_op_list expr1,decl_op_list expr2,decl_op_list expr3,local_type codeblock){
   local_type res=codeblock;  
@@ -424,8 +444,17 @@ void chain_lval_list(lval_list *list1,lval_list *list2){
   }
 }
 
-char * array_type(s_list *dimentions ,type_rep type){
- return concat("array [",sprint_s_list(dimentions,","),"] of ",convert_type(type),NULL);
+char *sprint_stars(int n){
+  char *res=malloc(sizeof(char)*n);
+  for(int i=0;i<n;i++){
+    strcat(res,"^");
+  }
+  return res;
+}
+
+char * array_type(lval_def lval ,type_rep type){
+  prefix_s_list(lval.dimentions,"0..");
+ return concat(sprint_stars(lval.nbpointers),"array [",sprint_s_list(lval.dimentions,","),"] of ",convert_type(type),NULL);
 }
 
 decl_list declaration_handler(type_rep type,lval_list lvals){
@@ -435,7 +464,7 @@ decl_list declaration_handler(type_rep type,lval_list lvals){
   while(temp!=NULL){
     if(temp->lval.type==array){
       decl_list *x=malloc(sizeof(decl_list));
-      x->type=array_type(temp->lval.dimentions,type);
+      x->type=array_type(temp->lval,type);
       x->ids=malloc(sizeof(s_list));
       x->ids->op=temp->lval.id;
       x->ids->next_op=NULL;
@@ -446,7 +475,7 @@ decl_list declaration_handler(type_rep type,lval_list lvals){
       chain_decl_list(res,x);
     }else{
       decl_list *x=malloc(sizeof(decl_list));
-      x->type=convert_type(type);
+      x->type=concat(sprint_stars(temp->lval.nbpointers),convert_type(type),NULL);
       x->ids=malloc(sizeof(s_list));
       x->ids->op=temp->lval.id;
       x->ids->next_op=NULL;
@@ -465,17 +494,16 @@ decl_list declaration_handler(type_rep type,lval_list lvals){
 
 void fprint_decl_list(decl_list *list){
   decl_list *temp=list;
-
   int first=1;
   while(temp!=NULL){
     printf("expressionr\n");
     if(strcmp(temp->type,"")){
       if(first){
-        printf("var ");
+        fprintf(out,"var ");
         first=0;
       }
-      print_s_list(temp->ids,", ");
-      printf(": %s ;\n",temp->type);
+      fprint_s_list(temp->ids,", ");
+      fprintf(out,": %s ;\n",temp->type);
     }
     temp=temp->next;
   }

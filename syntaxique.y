@@ -68,7 +68,8 @@
 %left DIVIDE MULT
 %left '(' ')' '[' ']' INCR DECR '.' 
 
-%type <code> ARGS LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR STAR VALUE GOTODEF LABEL BASICTYPE IDS
+%type <ctr> STAR
+%type <code> ARGS LOGICAL RELATIONAL BITWISE ARITHMETIC OPERATOR VALUE GOTODEF LABEL BASICTYPE IDS
 %type <t_val> ASSIGNMENTOP
 %type <op> DEFINITION ARGDEFINITION OPERATION  ASSIGNMENT GLOBALOPERATION GLOBALASSIGNMENT NAME RVALUE
 %type <modif> MODIFIER
@@ -101,6 +102,7 @@
   char *code;
   int t_val;
   s_list *exp;
+  int ctr;
 }
 %start CODE
 %%
@@ -147,13 +149,13 @@ DEFINES:'#' DEFINE ID VALUE
 FUNCTION:TYPE LVALUE '(' ARGS ')' '{' LOCAL '}' {fprint_functions($1,$2.id,$4,$7);}
 ;
 
-LVALUE:STAR LVALUE {$$=$2;$$.id=concat($1,$$.id,NULL);}
-  |ID {$$.id=$1;$$.type=simple;$$.dimentions=NULL;}
-  |ID ARRAYDIM{$$.id=$1;$$.type=array;$$.dimentions=$2;}
+LVALUE:STAR LVALUE {$$=$2;$$.nbpointers=$1+$2.nbpointers;}
+  |ID {$$.id=$1;$$.type=simple;$$.dimentions=NULL;$$.nbpointers=0;}
+  |ID ARRAYDIM{$$.id=$1;$$.type=array;$$.dimentions=$2;$$.nbpointers=0;}
 ;
 
 ARRAYDIM:ARRAYDIM ARRAYDIM {chain_s_list($1,$2);$$=$1;}
-  |'['OPERATION']' {$$=malloc(sizeof(s_list));insert_s_list(&$$,concat("0..",$2.op,NULL));}
+  |'['OPERATION']' {$$=malloc(sizeof(s_list));insert_s_list(&$$,$2.op);}
 ;
 
 ARGS:{$$="";}
@@ -274,7 +276,7 @@ $$.lvals.next=NULL;}
 
 GLOBALDEFINITION:GLOBALDEFINITION ',' GLOBALDEFINITION {$$=$1;chain_lval_list(&$$,&$3);}
   |GLOBALASSIGNMENT {$$.lval.id=$1.op;$$.next=NULL;}
-  |LVALUE {$$.lval=$1;$$.next=NULL;print_s_list($$.lval.dimentions,"  ,");printf("kkk%s\n",$$.lval.id);}
+  |LVALUE {$$.lval=$1;$$.next=NULL;}
 ;
 
 GLOBALASSIGNMENT:LVALUE '=' GLOBALOPERATION {$$.op=$1.id;insert_s_list(&main_inits,concat($1.id," := ",$3.op,";",NULL));$$.preop=$3.preop;$$.postop=$3.postop;}
@@ -292,7 +294,7 @@ DEFINITION:DEFINITION ',' DEFINITION {init_op_type(&$$);$$.op=$3.op;insert_s_lis
   |ASSIGNMENT {$$=$1;}
 ;
 
-ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$.op=concat($1.id,convert_assignment($1.id,$2),$3.op,NULL);
+ASSIGNMENT:LVALUE ASSIGNMENTOP OPERATION {$$.op=concat(generate_name_lval($1),convert_assignment($1.id,$2),$3.op,NULL);
 $$.preop=$3.preop;$$.postop=$3.postop;}
 ;
 
@@ -354,7 +356,7 @@ BITWISE:BAND        {$$=" & ";}
 ;
 
 NAME:RVALUE {$$=$1;}
-  |LVALUE {init_op_type(&$$);$$.op=$1.id;$$.postop=NULL;}
+  |LVALUE {init_op_type(&$$);$$.op=generate_name_lval($1);$$.postop=NULL;}
 ;
 
 RVALUE:BAND IDS             {init_op_type(&$$);$$.op=concat("@",$2,NULL);$$.postop=NULL;}
@@ -369,8 +371,8 @@ IDS:ID'.'IDS {$$=concat($1,".",$3,NULL);}
   |ID {$$=$1;}
 ;
 
-STAR:MULT STAR {$$=concat("^",$2,NULL);}
-  |MULT   {$$="^";}
+STAR:MULT STAR {$$=$2+1;}
+  |MULT   {$$=1;}
 ;
 
 VALUE:VALINT {$$=strdup($1);}
@@ -494,6 +496,9 @@ char* concat(const char * args,...){
 int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
   out = fopen(argv[2], "w+");//ficher du resultat de la traduction
+  
+  //char *s="write('%c test1 \\n test2 %s test3 test4'  ,arg1,arg2);";
+  //printf("-- %s --\n",generate_function(s));
   if(!strcmp(argv[3],"en")){
       lang='e';
   }else{

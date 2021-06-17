@@ -1,37 +1,30 @@
-function fact ( n:integer ) : longint;
-var res : longint ;
-i : integer ;
-b : array [0..1000] of integer ;
+var a , j , i : integer ;
+c : array [0..10,0..10] of integer ;
+k : real ;
+s : ^real ;
 BEGIN
-res := 1; 
-i := 1 + 20; 
-while(i < n) do 
+
+i := 0; 
+while(i < 10) do 
 begin 
-	res := res * i; 
+	j := 0; 
+	while(j < 10) do 
+	begin 
+		c[i ,j] := i * j; 
+		j := 1 + j; 
+	end ; 
 	i := 1 + i; 
 end ; 
-Exit(res); 
-END;
-var d : array [0..10] of real ;
-b : array [0..1000] of integer ;
-BEGIN
-b := 10; 
-c := 0; 
-while ( a > 10 ) do  
+i := 0; 
+while(i < 10) do 
 begin 
-	i := 1 + 20; 
-	while(i < n) do 
+	j := 0; 
+	while(j < 10) do 
 	begin 
-		b := res; 
-		res := res * i; 
-		repeat 
-		begin 
-			b := res; 
-			res := res * i; 
-		end 
-		until ( b + 50-5 < 100 ); 
-		i := 1 + i; 
+		write(' test ',', tt', j); 
+		j := 1 + j; 
 	end ; 
+	k := 0; 
+	i := 1 + i; 
 end ; 
-write(fact(10)); 
 END.

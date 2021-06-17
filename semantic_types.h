@@ -76,6 +76,7 @@ enum lval_type{
 struct lval_def{
   char *id;
   s_list *dimentions;
+  int nbpointers;
   int type;
 };
 typedef struct lval_def lval_def;
