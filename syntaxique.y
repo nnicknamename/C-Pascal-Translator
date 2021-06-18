@@ -444,7 +444,7 @@ char* res;
       res=concat(" := ",lvalue," & ",NULL);   
     break; 
     case ASSBOR :    
-      res=concat(" := ",lvalue," | ",NULL);   
+      res=concat(" := ",lvalue," | ",NULL);
     break;   
     case ASSBXOR :   
       res=concat(" := ",lvalue," ^ ",NULL);   
@@ -458,7 +458,7 @@ char* res;
   }
   return res;
 }
-void yyerror(const char *s) {
+void yyerror(const char *s){
   char *c;
   char str[12];
   sprintf(str, "%d", line);
@@ -496,9 +496,6 @@ char* concat(const char * args,...){
 int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
   out = fopen(argv[2], "w+");//ficher du resultat de la traduction
-  
-  //char *s="write('%c test1 \\n test2 %s test3 test4'  ,arg1,arg2);";
-  //printf("-- %s --\n",generate_function(s));
   if(!strcmp(argv[3],"en")){
       lang='e';
   }else{

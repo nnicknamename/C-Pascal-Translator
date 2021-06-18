@@ -356,18 +356,20 @@ void fprint_types(local_type local){
 }
 
 void fprint_functions(type_rep type,char * name,char *args,local_type local){
+  Dri
   if(strncmp(name,"main",4)){
-    fprintf(out,"function %s ( %s ) : %s;\n",name,args,convert_type(type));
+    char *type_converted=convert_type(type);
+    if(type_converted!=NULL){
+      fprintf(out,"function %s ( %s ) : %s;\n",name,args,convert_type(type));
+    }else{
+      fprintf(out,"procedure %s ( %s );\n",name,args);
+    }
     fprint_types(local);
     fprintf(out,"BEGIN\n");
     fprint_s_list(local.ops,"\n");
     fprintf(out,"\nEND;\n");
   }else{
     main_local=local;
-/*    fprint_types(local);
-    fprintf(out,"BEGIN\n");
-    fprint_s_list(local.ops,"\n");
-    fprintf(out,"\nEND.\n");*/
   }
 } 
 
@@ -386,7 +388,11 @@ op_type function_call_handler(char * name ,op_type args){
   if(strncmp(name,"printf",6)==0){
     res.op=generate_function(concat("write(",args.op,");",NULL));
   }else{
-    res.op=concat(name,"(",args.op,");",NULL);
+    if(strncmp(name,"scanf",5)==0){
+      res.op=concat("read(",args.op,");",NULL);
+    }else{
+      res.op=concat(name,"(",args.op,");",NULL);
+    }
   }
   res.preop=args.preop;
   res.postop=args.postop;
