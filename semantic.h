@@ -1,10 +1,10 @@
 #include "semantic_types.h"
 #include "function_translator/func_trans.h"
-
+#include <string.h>
 //operations semantics 
 char* concat(const char * args,...);
 char* convert_type(type_rep type);
-
+char* f_context;
 int length_s_list(s_list **head){
   int res=0;
   s_list *temp=*head;
@@ -267,7 +267,7 @@ local_type *insert_decl_in_loc(local_type *local,decl_type decl){
         if(concatenated==0 && !strcmp(temp->type,decl.type)){
             chain_s_list_id(temp->ids,decl.ids);
             concatenated=1;
-        }
+        }   
         temp=temp->next;
     }
     if(concatenated==0){
@@ -356,7 +356,7 @@ void fprint_types(local_type local){
 }
 
 void fprint_functions(type_rep type,char * name,char *args,local_type local){
-  Dri
+
   if(strncmp(name,"main",4)){
     char *type_converted=convert_type(type);
     if(type_converted!=NULL){
@@ -382,20 +382,78 @@ void generate_main(){
     fprintf(out,"\nEND.\n");
 }
 
-op_type function_call_handler(char * name ,op_type args){
+char *scanf_pointer_handler(char * var){
+  if(strncmp(var,"@",1)==0){
+    var++;
+  }else{
+    var=concat(var,"^",NULL);
+  }
+  return var;
+}
+
+char* scanf_args_list_handler(op_list *args){
+  op_list *temp=args;
+  char *res=" ";
+  while(temp->next!=NULL){
+    res=concat(res,scanf_pointer_handler(temp->ops.op)," , ",NULL);
+    temp=temp->next;
+  }
+  res=concat(res,scanf_pointer_handler(temp->ops.op),NULL);
+
+  return res;
+}
+
+s_list *op_list_to_preop_list(op_list *args){
+  op_list *temp=args;
+  s_list *res=NULL;
+
+  while(temp!=NULL){
+    chain_s_list(res,args->ops.preop);
+    temp=temp->next;
+  }
+
+  return res;
+}
+s_list *op_list_to_postop_list(op_list *args){
+  op_list *temp=args;
+  s_list *res=NULL;
+  while(temp!=NULL){
+    chain_s_list(res,args->ops.preop);
+    temp=temp->next;
+  }
+
+  return res;
+}
+
+char* scanf_list_handler(op_list *args){
+  op_list *temp=args;
+  char *res=" ";
+  while(temp->next!=NULL){
+    res=concat(res,temp->ops.op," , ",NULL);
+    temp=temp->next;
+  }
+  res=concat(res,temp->ops.op,NULL);
+
+  return res;
+}
+
+op_type function_call_handler(char * name,op_list *args){
   op_type res;
   init_op_type(&res);
   if(strncmp(name,"printf",6)==0){
-    res.op=generate_function(concat("write(",args.op,");",NULL));
+    res.op=generate_function(concat("write(",scanf_list_handler(args),");",NULL));
   }else{
     if(strncmp(name,"scanf",5)==0){
-      res.op=concat("read(",args.op,");",NULL);
+      
+      res.op=concat("read(",scanf_args_list_handler(args),")",NULL);
     }else{
-      res.op=concat(name,"(",args.op,");",NULL);
+      res.op=concat(name,"(",scanf_list_handler(args),")",NULL);
     }
   }
-  res.preop=args.preop;
-  res.postop=args.postop;
+
+  printf("function %s :%s \n",name,res.op);
+  res.preop=op_list_to_preop_list(args);
+  res.postop=op_list_to_postop_list(args);
   return res;
 }
 
@@ -408,6 +466,15 @@ char *serialize_op(op_type decl){
   return  decl.op;
 }
 
+char *sprint_stars(int n){
+  char *res=malloc(sizeof(char)*n);
+  for(int i=0;i<n;i++){
+    strcat(res,"^");
+  }
+  return res;
+}
+
+
 char * generate_name_lval(lval_def lval){
   char * res;
   if(lval.type==simple){
@@ -415,6 +482,7 @@ char * generate_name_lval(lval_def lval){
   }else{
     res=concat(lval.id,"[",sprint_s_list(lval.dimentions," ,"),"]",NULL);
   }
+  res=concat(res,sprint_stars(lval.nbpointers),NULL);
   return res;
 }
 
@@ -450,17 +518,26 @@ void chain_lval_list(lval_list *list1,lval_list *list2){
   }
 }
 
-char *sprint_stars(int n){
-  char *res=malloc(sizeof(char)*n);
-  for(int i=0;i<n;i++){
-    strcat(res,"^");
+void decrease_val(s_list *lval){
+  s_list* temp=lval;
+  while (temp!=NULL){
+    if(temp->op!=NULL && strcmp(temp->op,"")){
+      printf("tesddt\n");
+      sprintf(temp->op,"%d",atoi(temp->op)-1);
+    }
+    temp=temp->next_op;
   }
-  return res;
+  
 }
 
 char * array_type(lval_def lval ,type_rep type){
+  decrease_val(lval.dimentions);
   prefix_s_list(lval.dimentions,"0..");
- return concat(sprint_stars(lval.nbpointers),"array [",sprint_s_list(lval.dimentions,","),"] of ",convert_type(type),NULL);
+  if(lval.inits!=NULL){
+    return concat(sprint_stars(lval.nbpointers),"array [",sprint_s_list(lval.dimentions,","),"] of ",convert_type(type),"= (",lval.inits,")",NULL);
+  }else{
+    return concat(sprint_stars(lval.nbpointers),"array [",sprint_s_list(lval.dimentions,","),"] of ",convert_type(type),NULL);
+  }
 }
 
 decl_list declaration_handler(type_rep type,lval_list lvals){
@@ -513,4 +590,114 @@ void fprint_decl_list(decl_list *list){
     }
     temp=temp->next;
   }
+}
+
+//********************************************************************
+
+enum treatment{
+  mall=0,
+  fre=1,
+  scan=2
+};
+
+typedef  struct func_tests{
+  char * detect;
+  int action;
+}func_tests;
+
+const struct func_tests dect1[]={
+   {"malloc(",mall},
+   {"free(",fre},
+   {"read(",scan}
+};
+
+int get_action(char* opr){
+  for(int i=0;i<3;i++){ 
+      if(strncmp(opr,dect1[i].detect,strlen(dect1[i].detect))==0){
+        return dect1[i].action;
+      }
+  }
+  return -1;
+}
+
+char* special_func_handler(char* opr,lval_def lval){
+  switch(get_action(opr)){
+    case mall:
+      if(lval.id!=NULL){
+        opr+=7;
+        opr=concat("getmem(",lval.id," ,",opr,NULL);
+      }
+    break;
+    case fre:
+      if(lval.id== NULL){
+        opr+=5;
+        opr=concat("freemem(",opr,NULL);
+      }
+    break;
+
+    case scan:
+    printf("prr\n");
+      if(lval.id== NULL){
+        opr=strchr(opr,',')+1;
+        opr=concat("read(",opr,NULL);
+      }
+    break;
+
+    default:
+      return  NULL;
+  }
+}
+
+//********************************************************************
+
+op_type func_handler(op_type opr){
+  op_type res;
+  lval_def l;
+  l.id=NULL;
+  res.op=NULL;
+  res.op=special_func_handler(opr.op,l);
+  if(res.op==NULL){
+    return opr;
+  }
+  res.preop=opr.preop;
+  res.postop=opr.postop;
+  return res;
+}
+
+
+op_type assign_handler(lval_def lval,int t_val,op_type opr){
+  op_type res;
+  res.op=NULL;
+  res.op=special_func_handler(opr.op,lval);
+  if(res.op==NULL && lval.id!=NULL){
+    res.op=concat(generate_name_lval(lval),convert_assignment(lval.id,t_val),opr.op,NULL);
+  }
+  res.preop=opr.preop;
+  res.postop=opr.postop;
+  return res;
+}
+
+char * cond_handle(op_type opr){
+  char * res;
+  res=opr.op;
+  if(opr.conditional==0){
+      res=concat(opr.op," > 0",NULL);
+  }
+  return res;
+}
+
+
+
+void chain_op_list(op_list *list1,op_list *list2){
+
+if(list1!=NULL){
+    op_list *temp=list1;
+    while(temp->next!=NULL){
+      temp=temp->next;
+    }
+    temp->next=list2;
+  }else{
+    list1=list2;
+  }
+
 }

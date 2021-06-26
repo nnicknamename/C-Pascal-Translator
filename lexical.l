@@ -57,6 +57,8 @@ real        {digit}+"."{digit}+
 "goto"      {return(GOTO);}
 "continue"  {return(CONTINUE);}
 
+"NULL"      {return (NIL);}
+
 {id}        {yylval.code=(char *)get_p_id(&id_table,strdup(yytext));return(ID);}
 {string}    {yylval.code=(char *)strdup(tr_string(yytext));line+=numberLines(yytext);return(VALSTR);}
 {coment}    {line+=numberLines(yytext);}

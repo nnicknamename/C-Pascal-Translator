@@ -18,7 +18,7 @@ enum language{
 };
 const struct word dictionary[]={
     {"caractére","chaine de caractére","entier","réel","identificateur"},
-    {"character","string","integer","real","identificator"}
+    {"character","string","integer","real","id"}
     
 };
 char * getTypeName(int lang,int type){

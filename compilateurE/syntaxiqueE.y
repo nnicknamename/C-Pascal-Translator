@@ -2,9 +2,13 @@
     #include <stdlib.h>
     #include<stdio.h>
     #include<string.h>
+    char lang;
     #include "generator.h"
     #include "languages.h"
     #define YY_DECL int zzlex (ZZSTYPE* yylval, ZZLTYPE * yylloc, yyscan_t yyscanner)
+    #define COLOR_RED     "\x1b[31m"
+    #define COLOR_RESET   "\x1b[0m"
+    int get_lang();
     //#define YYERROR_VERBOSE
     typedef struct yy_buffer_state * YY_BUFFER_STATE;
     extern YY_BUFFER_STATE zz_scan_string(char * str);
@@ -71,11 +75,11 @@ X:TERMINALS {$$.name=strdup($1.name);}
   |AP Z AP  {$$.name=strdup("\"");strcat($$.name,$2.name);strcat($$.name,"\"");}
   |Z        {$$.name=strdup("\"");strcat($$.name,$1.name);strcat($$.name,"\"");}
 ;
-TERMINALS:VALINT{$$.name=getTypeName(fr,t_integer);}     
-  |VALREAL      {$$.name=getTypeName(fr,t_real);}
-  |VALCHAR      {$$.name=getTypeName(fr,t_character);}
-  |VALSTR       {$$.name=getTypeName(fr,t_string);}
-  |ID           {$$.name=getTypeName(fr,t_id);}
+TERMINALS:VALINT{$$.name=getTypeName(get_lang(),t_integer);}     
+  |VALREAL      {$$.name=getTypeName(get_lang(),t_real);}
+  |VALCHAR      {$$.name=getTypeName(get_lang(),t_character);}
+  |VALSTR       {$$.name=getTypeName(get_lang(),t_string);}
+  |ID           {$$.name=getTypeName(get_lang(),t_id);}
   |DEFINE       {$$.name="define";}
   |INCLUDE      {$$.name="include";}
   |AUTO         {$$.name="auto";}
@@ -159,25 +163,46 @@ Z:'('           {$$.name="(";}
 ;
 %%
 void printError(int line,char* unexpected,char* expecting){
-  if(expecting!=""){
-    printf("erreur syntaxique dans la ligne %d, un %s est attendu, mais %s est trouvé.\n",line,expecting,unexpected);
-  }else{
-    printf("erreur syntaxique dans la ligne %d,%s n'est pas attendu.\n",line,unexpected);
+  switch(lang){
+    case 'f':
+      if(expecting!=""){
+        printf(COLOR_RED"Rrreur syntaxique"COLOR_RESET " dans la ligne %d, un %s est attendu, mais %s est trouvé.\n",line,expecting,unexpected);
+      }else{
+        printf(COLOR_RED"Rrreur syntaxique"COLOR_RESET " dans la ligne %d,%s n'est pas attendu.\n",line,unexpected);
+      }
+    break;
+    case 'e':
+      if(expecting!=""){
+        printf(COLOR_RED"Syntax error"COLOR_RESET ", unexpected %s, expecting %s at line %d.\n",unexpected,expecting,line);
+      }else{
+        printf(COLOR_RED"Syntax error"COLOR_RESET ", unexpected %s,at line %d.\n",unexpected,line);
+      }
+    break;
   }
 }
-void yyerror(const char *s) {
-  printf("%s.\n",s);
+
+int get_lang(){
+  if(lang=='f'){
+    return fr;
+  }else{
+    return en;
+  }
 }
-void generateError(char *error,char lang){
+
+void yyerror(const char *s) {
+  //printf("%s.\n",s);
+}
+void generateError(char *error,char lan){
+  lang=lan;
   switch(lang){
     case 'e':
-      printf("%s\n",error);
-    break;
     case 'f':{
       YY_BUFFER_STATE buffer = zz_scan_string(error);
       yyparse();
       zz_delete_buffer(buffer);}
     break;
+    default:
+      printf(COLOR_RED"%s\n"COLOR_RESET,error);
   }
 }
 /*int main(int argc, char *argv[]) {

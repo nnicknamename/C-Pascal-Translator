@@ -1,4 +1,5 @@
 #include<stdio.h>
+#include<stdlib.h>
 
 
 int main(){
@@ -8,12 +9,16 @@ int main(){
             c[i][j]=i*j;
         }
     }
+
+
     for(int i=0;i<10;i++){
         for(int j=0;j<10;j++){
-            printf("%d , tt%d", "test",  j);
+            write(c[i][j]," ");
         }
-        float k=0,*s;
+        writeln();
     }
+
+    return 0;
 }
 //init_op_type(&$$.ops);$$.ops.op=$3.ops.op;chain_s_list($$.ops.postop,$3.ops.postop);insert_s_list(&$1.ops.preop,$1.ops.op);chain_s_list($$.ops.preop,$1.ops.preop);
 //valgrind

@@ -1354,61 +1354,61 @@ yyreduce:
 
   case 15:
 #line 60 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1359 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
 #line 61 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1365 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
 #line 62 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1371 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
 #line 63 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1377 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
 #line 64 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1383 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
 #line 65 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1389 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
 #line 66 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1395 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
 #line 67 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1401 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
 #line 68 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1407 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
 #line 69 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text=NULL;(yyval.func)->type=form_spec;}
+    {init_func_rep(&(yyval.func));(yyval.func)->type=form_spec;}
 #line 1413 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1456,7 +1456,7 @@ yyreduce:
 
   case 32:
 #line 79 "func_trans.y" /* yacc.c:1646  */
-    {init_func_rep(&(yyval.func));(yyval.func)->text="\\";(yyval.func)->type=special_char;}
+    {init_func_rep(&(yyval.func));(yyval.func)->text="\\\\";(yyval.func)->type=simple_text;}
 #line 1461 "func_trans.tab.c" /* yacc.c:1646  */
     break;
 

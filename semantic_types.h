@@ -35,11 +35,18 @@ struct s_list{
 };
 typedef struct s_list s_list;
 
+struct opr_type{
+    char * opr;
+    int conditional;
+};
+typedef struct opr_type opr_type;
+
 struct op_type{
     s_list* preop;
     char* op;
     s_list* postop;
     int simple;
+    int conditional;
 };
 typedef struct op_type op_type;
 
@@ -76,6 +83,7 @@ enum lval_type{
 struct lval_def{
   char *id;
   s_list *dimentions;
+  char *inits;
   int nbpointers;
   int type;
 };
@@ -103,6 +111,16 @@ struct decl_op_list
   op_type ops;
 };
 typedef struct decl_op_list decl_op_list;
+
+
+
+struct op_list{
+  op_type ops;
+  struct op_list *next;
+};
+typedef struct op_list op_list;
+
+
 
 
 FILE *out;

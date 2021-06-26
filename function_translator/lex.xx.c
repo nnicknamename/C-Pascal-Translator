@@ -625,7 +625,7 @@ struct yy_trans_info
 static const flex_int16_t yy_accept[39] =
     {   0,
         0,    0,   28,   26,   25,   27,   25,   26,    2,    4,
-        5,    3,   24,    1,   26,   25,   25,   24,   15,    6,
+        5,   24,    3,    1,   26,   25,   25,   24,   15,    6,
         7,    8,    9,   10,   11,   12,   13,   14,   24,   23,
        16,   17,   18,   19,   20,   21,   22,    0
     } ;
@@ -636,16 +636,16 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    4,    1,    1,    1,    1,    5,    1,    6,    7,
-        8,    1,    1,    9,    1,    1,    1,   10,   10,   10,
-       10,   10,   10,   10,   10,   10,   10,    1,   11,    1,
-        1,    1,    1,    1,   10,   10,   10,   10,   10,   10,
-       10,   10,   10,   10,   10,   10,   10,   10,   10,   10,
-       10,   10,   10,   10,   10,   10,   10,   10,   10,   10,
-        1,   12,    1,    1,   10,    1,   13,   14,   15,   16,
+        8,    9,    9,   10,    9,    1,    9,    9,    9,    9,
+        9,    9,    9,    9,    9,    9,    9,    9,   11,    1,
+        9,    1,    1,    1,    9,    9,    9,    9,    9,    9,
+        9,    9,    9,    9,    9,    9,    9,    9,    9,    9,
+        9,    9,    9,    9,    9,    9,    9,    9,    9,    9,
+        9,   12,    9,    9,    9,    1,   13,   14,   15,   16,
 
-       17,   18,   10,   10,   19,   10,   10,   10,   10,   20,
-       21,   10,   10,   22,   23,   24,   25,   26,   10,   27,
-       10,   10,    1,    1,    1,    1,    1,    1,    1,    1,
+       17,   18,    9,    9,   19,    9,    9,    9,    9,   20,
+       21,    9,    9,   22,   23,   24,   25,   26,    9,   27,
+        9,    9,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -664,7 +664,7 @@ static const YY_CHAR yy_ec[256] =
 
 static const YY_CHAR yy_meta[28] =
     {   0,
-        1,    2,    1,    3,    1,    1,    1,    1,    1,    3,
+        1,    2,    1,    3,    1,    1,    1,    1,    3,    1,
         1,    1,    3,    3,    3,    3,    3,    3,    3,    3,
         3,    3,    3,    3,    3,    3,    3
     } ;
@@ -672,7 +672,7 @@ static const YY_CHAR yy_meta[28] =
 static const flex_int16_t yy_base[41] =
     {   0,
         0,    0,   38,   72,   26,   72,   27,   27,   72,   72,
-       72,   72,    0,   72,   43,   31,   32,    0,   72,   72,
+       72,    0,   72,   72,   43,   31,   32,    0,   72,   72,
        72,   72,   72,   72,   72,   72,   72,   72,    0,   72,
        72,   72,   72,   72,   72,   72,   72,   72,   68,   34
     } ;
@@ -680,7 +680,7 @@ static const flex_int16_t yy_base[41] =
 static const flex_int16_t yy_def[41] =
     {   0,
        38,    1,   38,   38,   38,   38,   39,   38,   38,   38,
-       38,   38,   40,   38,   38,   38,   39,   40,   38,   38,
+       38,   40,   38,   38,   38,   38,   39,   40,   38,   38,
        38,   38,   38,   38,   38,   38,   38,   38,   40,   38,
        38,   38,   38,   38,   38,   38,   38,    0,   38,   38
     } ;
@@ -688,8 +688,8 @@ static const flex_int16_t yy_def[41] =
 static const flex_int16_t yy_nxt[100] =
     {   0,
         4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
-       14,   15,   13,   13,   13,   13,   13,   13,   13,   13,
-       13,   13,   13,   13,   13,   13,   13,   16,   16,   16,
+       14,   15,   12,   12,   12,   12,   12,   12,   12,   12,
+       12,   12,   12,   12,   12,   12,   12,   16,   16,   16,
        17,   19,   16,   16,   16,   17,   29,   38,   38,   38,
        38,   20,   21,   22,   23,   24,   38,   25,   38,   26,
        38,   27,   38,   28,   30,   31,   32,   38,   38,   38,
@@ -1036,116 +1036,116 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 20 "func_trans.l"
+#line 19 "func_trans.l"
 {return (PC);}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 21 "func_trans.l"
+#line 20 "func_trans.l"
 {return (PD);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 22 "func_trans.l"
+#line 21 "func_trans.l"
 {return (PE);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 23 "func_trans.l"
+#line 22 "func_trans.l"
 {return (PF);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 24 "func_trans.l"
+#line 23 "func_trans.l"
 {return (PI);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 25 "func_trans.l"
+#line 24 "func_trans.l"
 {return (PO);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 26 "func_trans.l"
+#line 25 "func_trans.l"
 {return (PS);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 27 "func_trans.l"
+#line 26 "func_trans.l"
 {return (PU);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 28 "func_trans.l"
+#line 27 "func_trans.l"
 {return (PX);}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 29 "func_trans.l"
+#line 28 "func_trans.l"
 {return (PP);}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 31 "func_trans.l"
+#line 30 "func_trans.l"
 {return (SA);}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 32 "func_trans.l"
+#line 31 "func_trans.l"
 {return (SB);}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 33 "func_trans.l"
+#line 32 "func_trans.l"
 {return (SF);}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 34 "func_trans.l"
+#line 33 "func_trans.l"
 {return (SN);}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 35 "func_trans.l"
+#line 34 "func_trans.l"
 {return (SR);}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 36 "func_trans.l"
+#line 35 "func_trans.l"
 {return (ST);}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 37 "func_trans.l"
+#line 36 "func_trans.l"
 {return (SV);}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 38 "func_trans.l"
+#line 37 "func_trans.l"
 {return (SS);}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 40 "func_trans.l"
+#line 39 "func_trans.l"
 {xxlval.string=(char *)strdup(yytext);return (TEXT);}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 41 "func_trans.l"
+#line 40 "func_trans.l"
 {return(END);}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 42 "func_trans.l"
+#line 41 "func_trans.l"
 
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 43 "func_trans.l"
+#line 42 "func_trans.l"
 {printf("Lexical error %s.",yytext);}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 44 "func_trans.l"
+#line 43 "func_trans.l"
 ECHO;
 	YY_BREAK
 #line 1152 "lex.xx.c"
@@ -2152,6 +2152,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 44 "func_trans.l"
+#line 43 "func_trans.l"
 
 

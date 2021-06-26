@@ -116,9 +116,10 @@ extern int yydebug;
     ASSBXOR = 326,
     ASSLSHIFT = 327,
     ASSRSHIFT = 328,
-    EL = 329,
-    HEAD = 330,
-    END = 331
+    NIL = 329,
+    EL = 330,
+    HEAD = 331,
+    END = 332
   };
 #endif
 
@@ -127,8 +128,10 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 90 "syntaxique.y" /* yacc.c:1909  */
+#line 98 "syntaxique.y" /* yacc.c:1909  */
 
+  op_list *op_li;
+  opr_type opr;
   decl_op_list dop_list;
   def_list defl;
   decl_list decllist;
@@ -145,7 +148,7 @@ union YYSTYPE
   s_list *exp;
   int ctr;
 
-#line 149 "syntaxique.tab.h" /* yacc.c:1909  */
+#line 152 "syntaxique.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

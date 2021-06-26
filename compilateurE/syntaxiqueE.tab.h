@@ -136,7 +136,7 @@ extern int zzdebug;
 
 union YYSTYPE
 {
-#line 48 "syntaxiqueE.y" /* yacc.c:1909  */
+#line 52 "syntaxiqueE.y" /* yacc.c:1909  */
 
   struct {char* name;} t; 
     int line;

@@ -57,16 +57,16 @@ INSIDEFORMAT:INSIDEFORMAT INSIDEFORMAT {chain_func_rep($1,$2);$$=$1;}
   |SPECIALCHAR {$$=$1;}
 ;
 
-FORMSPEC:PC {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PD       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PE       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PF       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PI       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PO       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PS       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PU       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PX       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
-  |PP       {init_func_rep(&$$);$$->text=NULL;$$->type=form_spec;}
+FORMSPEC:PC {init_func_rep(&$$);$$->type=form_spec;}
+  |PD       {init_func_rep(&$$);$$->type=form_spec;}
+  |PE       {init_func_rep(&$$);$$->type=form_spec;}
+  |PF       {init_func_rep(&$$);$$->type=form_spec;}
+  |PI       {init_func_rep(&$$);$$->type=form_spec;}
+  |PO       {init_func_rep(&$$);$$->type=form_spec;}
+  |PS       {init_func_rep(&$$);$$->type=form_spec;}
+  |PU       {init_func_rep(&$$);$$->type=form_spec;}
+  |PX       {init_func_rep(&$$);$$->type=form_spec;}
+  |PP       {init_func_rep(&$$);$$->type=form_spec;}
 ;
 
 SPECIALCHAR:SA  {init_func_rep(&$$);$$->text="#7";$$->type=special_char;}
@@ -76,7 +76,7 @@ SPECIALCHAR:SA  {init_func_rep(&$$);$$->text="#7";$$->type=special_char;}
   |SV           {init_func_rep(&$$);$$->text="#11";$$->type=special_char;}
   |SF           {init_func_rep(&$$);$$->text="#12";$$->type=special_char;}
   |SR           {init_func_rep(&$$);$$->text="#13";$$->type=special_char;}
-  |SS           {init_func_rep(&$$);$$->text="\\";$$->type=special_char;}
+  |SS           {init_func_rep(&$$);$$->text="\\\\";$$->type=simple_text;}
 ;
 
 %%
