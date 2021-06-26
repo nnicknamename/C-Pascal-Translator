@@ -1,30 +1,22 @@
-var a , j , i : integer ;
-c : array [0..10,0..10] of integer ;
-k : real ;
-s : ^real ;
+function fact ( n:integer ) : integer;
+var res , i : integer ;
+BEGIN
+res := 1; 
+i := 1; 
+while(i <= n) do 
+begin 
+	res := res * i; 
+	i := 1 + i; 
+end ; 
+Exit(res); 
+END;
+
+
+var n , k : integer ;
 BEGIN
 
-i := 0; 
-while(i < 10) do 
-begin 
-	j := 0; 
-	while(j < 10) do 
-	begin 
-		c[i ,j] := i * j; 
-		j := 1 + j; 
-	end ; 
-	i := 1 + i; 
-end ; 
-i := 0; 
-while(i < 10) do 
-begin 
-	j := 0; 
-	while(j < 10) do 
-	begin 
-		write(' test ',', tt', j); 
-		j := 1 + j; 
-	end ; 
-	k := 0; 
-	i := 1 + i; 
-end ; 
-END.
+read( n); 
+k := fact( n); 
+write('fact ', n ,' = ', k,#10); 
+
+END.fp
