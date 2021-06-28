@@ -9,13 +9,9 @@
 %option noyywrap
 %option never-interactive
 
-text [ ]*[=:\+\-/*\^a-zA-Z0-9_\[\]][=:\+\-/*\^a-zA-Z0-9_\[\] ]*
+text [ ]*[=:\+\-/*\^a-zA-Z0-9_\[\],;\(\)][=:\+\-/*\^a-zA-Z0-9_\[\],;\(\) ]*
 %%
-";"     {return (';');}
 "'"     {return ('\'');}
-","     {return (',');}
-"("     {return ('(');}
-")"     {return (')');}
 "%c"    {return (PC);}
 "%d"    {return (PD);}
 "%e"    {return (PE);}

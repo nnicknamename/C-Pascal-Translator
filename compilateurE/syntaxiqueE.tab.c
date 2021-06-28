@@ -2210,16 +2210,16 @@ void printError(int line,char* unexpected,char* expecting){
   switch(lang){
     case 'f':
       if(expecting!=""){
-        printf(COLOR_RED"Rrreur syntaxique"COLOR_RESET " dans la ligne %d, un %s est attendu, mais %s est trouvé.\n",line,expecting,unexpected);
+        printf("Erreur syntaxique"COLOR_RESET " dans la ligne %d, un %s est attendu, mais %s est trouvé.\n",line,expecting,unexpected);
       }else{
-        printf(COLOR_RED"Rrreur syntaxique"COLOR_RESET " dans la ligne %d,%s n'est pas attendu.\n",line,unexpected);
+        printf("Erreur syntaxique"COLOR_RESET " dans la ligne %d,%s n'est pas attendu.\n",line,unexpected);
       }
     break;
     case 'e':
       if(expecting!=""){
-        printf(COLOR_RED"Syntax error"COLOR_RESET ", unexpected %s, expecting %s at line %d.\n",unexpected,expecting,line);
+        printf("Syntax error"COLOR_RESET ", unexpected %s, expecting %s at line %d.\n",unexpected,expecting,line);
       }else{
-        printf(COLOR_RED"Syntax error"COLOR_RESET ", unexpected %s,at line %d.\n",unexpected,line);
+        printf("Syntax error"COLOR_RESET ", unexpected %s,at line %d.\n",unexpected,line);
       }
     break;
   }

@@ -161,7 +161,7 @@ FUNCTION:TYPE LVALUE {f_context=$2.id;}'(' ARGS ')' '{' LOCAL '}' {fprint_functi
 
 LVALUE:STAR LVALUE {$$=$2;$$.nbpointers=$1+$2.nbpointers;}
   |ID {$$.id=$1;$$.type=simple;$$.dimentions=NULL;$$.nbpointers=0;}
-  |ID ARRAYDIM{$$.id=$1;$$.type=array;$$.dimentions=$2;$$.nbpointers=0;}
+  |ID ARRAYDIM {$$.id=$1;$$.type=array;$$.dimentions=$2;$$.nbpointers=0;}
 ;
 
 ARRAYDIM:ARRAYDIM ARRAYDIM {chain_s_list($1,$2);$$=$1;}
@@ -195,7 +195,7 @@ LOCAL:                {init_local_type(&$$);}
   |LOCAL WHILELOOP    {chain_local(&$1,&$2);$$=$1;}
   |LOCAL DOWHILE      {chain_local(&$1,&$2);$$=$1;}
   |LOCAL FORLOOP      {chain_local(&$1,&$2);$$=$1;}
-  |LOCAL SWITCHCOND   {printf("test\n");chain_local(&$1,&$2);$$=$1;}
+  |LOCAL SWITCHCOND   {chain_local(&$1,&$2);$$=$1;}
 ;
 
 LINE:EXPRESSION EL      {$$=$1;postfix_s_list($$.ops.preop,";");postfix_s_list($$.ops.postop,";");$$.ops.op=strcmp($$.ops.op,"")?concat($$.ops.op,";",NULL):"";}  
@@ -223,13 +223,13 @@ CASEAFTER:CASE1 CASEAFTER {chain_local(&$2,&$1);$$=$2;}
   |CASE1 {$$=$1;}
 ;
 
-CASE1:CASE VALUE':' LOCAL {printf("test\n");$$=$4;$$.ops->op=concat($2," :",$$.ops->op,NULL);}
+CASE1:CASE VALUE':' LOCAL {$$=$4;$$.ops->op=concat($2," :",$$.ops->op,NULL);}
 ;
 
 DEFAULT1:DEFAULT ':' LOCAL {$$=$3;}
 ;
 
-DEFAULT2:DEFAULT ':' LOCAL {printf("default\n");$$=$3;$$.ops->op=concat("test",$$.ops->op,NULL);}
+DEFAULT2:DEFAULT ':' LOCAL {$$=$3;$$.ops->op=concat("test",$$.ops->op,NULL);}
 ;
 
 FORLOOP:FOR '(' EXPRESSION EL EXPRESSION EL EXPRESSION')'CODEBLOCK {$$=for_loop_handler($3,$5,$7,$9);}
@@ -247,7 +247,7 @@ CONDITIONALS:IF '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,c
 ;
 
 CONDCODE:CODEBLOCK {$$=$1;}
-  |LINE {init_local_type(&$$);chain_decl_list($$.declarations,$1.declarations);insert_first_s_list(&$$.ops,"begin");insert_s_list(&$$.ops,"end");}
+  |LINE {init_local_type(&$$);chain_decl_list($$.declarations,$1.declarations);insert_first_s_list(&$$.ops,"begin");chain_s_list($$.ops,$1.ops.preop);insert_s_list(&$$.ops,$1.ops.op);chain_s_list($$.ops,$1.ops.postop);insert_s_list(&$$.ops,"end");}
 ;
 
 WHILELOOP:WHILE '(' DEFINITION ')' CONDCODE {$$=$5;insert_first_s_list(&$$.ops,concat("while ( ",cond_handle($3)," ) do ",NULL));postfix_last_s_list($$.ops," ;");}
@@ -317,7 +317,8 @@ ASSIGNMENTOP:'='  {$$=-1;}
   |ASSBXOR        {$$=ASSBXOR;}
   |ASSLSHIFT      {$$=ASSLSHIFT;}
   |ASSRSHIFT      {$$=ASSRSHIFT;}   
-;                                      
+; 
+
 OPERATION:OPERATION OPERATOR OPERATION {init_op_type(&$$);$$.op=concat($1.op,$2.opr,$3.op,NULL);chain_s_list($$.preop,$1.preop);chain_s_list($$.preop,$3.preop);chain_s_list($$.postop,$1.postop);chain_s_list($$.postop,$3.postop);$$.simple=0;$$.conditional=$2.conditional||$1.conditional||$3.conditional;}
   |'('OPERATION')'{$$=$2;$$.op=concat("( ",$2.op," )",NULL);}
   |NOT OPERATION {init_op_type(&$$);$$.op=concat("not ",$2.op,NULL);insert_s_list(&$$.preop,$2.preop->op);insert_s_list(&$$.postop,$2.postop->op);}
@@ -524,6 +525,20 @@ int init_lang (int argc,char *argv[]){
   return 1;
 }
 
+char * get_file_name(char *path){
+  char * res=strrchr(path,'/');
+  if(res!=NULL){
+    res+=1;
+    char * post=strrchr(path,'.');
+    if(post==NULL){
+      return NULL;
+    }
+    post[0]='\0';
+    return res;
+  }
+  return path;
+}
+
 int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
   out = fopen(argv[2], "w+");//ficher du resultat de la traduction
@@ -533,11 +548,16 @@ int main(int argc, char *argv[]) {
   }
 
   if (!myfile) {
-    printf("file not found");
+    printf("file not found\n");
     return -1;
   }
   yyin = myfile;
-
+  char * head=get_file_name(out_name);
+  if(head==NULL){
+    printf("Error, Wrong output file format.\n");
+    return -1;
+  }
+  fprintf(out,"program %s ;\n",head);
   yyparse();
   //print_id_list(id_table);
   fclose(myfile);

@@ -73,7 +73,7 @@ extern int xxdebug;
 
 union YYSTYPE
 {
-#line 25 "func_trans.y" /* yacc.c:1909  */
+#line 27 "func_trans.y" /* yacc.c:1909  */
 
   char * string ;
   func_rep *func;

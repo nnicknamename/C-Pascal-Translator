@@ -441,7 +441,7 @@ op_type function_call_handler(char * name,op_list *args){
   op_type res;
   init_op_type(&res);
   if(strncmp(name,"printf",6)==0){
-    res.op=generate_function(concat("write(",scanf_list_handler(args),");",NULL));
+    res.op=generate_function(args->ops.op,args->next);
   }else{
     if(strncmp(name,"scanf",5)==0){
       
@@ -451,7 +451,7 @@ op_type function_call_handler(char * name,op_list *args){
     }
   }
 
-  printf("function %s :%s \n",name,res.op);
+  //printf("function %s :%s \n",name,res.op);
   res.preop=op_list_to_preop_list(args);
   res.postop=op_list_to_postop_list(args);
   return res;
@@ -522,7 +522,7 @@ void decrease_val(s_list *lval){
   s_list* temp=lval;
   while (temp!=NULL){
     if(temp->op!=NULL && strcmp(temp->op,"")){
-      printf("tesddt\n");
+      //printf("tesddt\n");
       sprintf(temp->op,"%d",atoi(temp->op)-1);
     }
     temp=temp->next_op;
@@ -543,7 +543,7 @@ char * array_type(lval_def lval ,type_rep type){
 decl_list declaration_handler(type_rep type,lval_list lvals){
   decl_list *res=NULL;
   lval_list *temp=&lvals;
-  printf("test\n");
+  //printf("test\n");
   while(temp!=NULL){
     if(temp->lval.type==array){
       decl_list *x=malloc(sizeof(decl_list));
@@ -636,7 +636,7 @@ char* special_func_handler(char* opr,lval_def lval){
     break;
 
     case scan:
-    printf("prr\n");
+    //printf("prr\n");
       if(lval.id== NULL){
         opr=strchr(opr,',')+1;
         opr=concat("read(",opr,NULL);

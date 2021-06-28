@@ -562,15 +562,15 @@ static const yytype_uint16 yyrline[] =
      250,   253,   256,   259,   262,   265,   275,   276,   278,   279,
      282,   283,   286,   287,   288,   291,   294,   295,   296,   297,
      298,   301,   302,   303,   306,   309,   310,   311,   312,   313,
-     314,   315,   316,   317,   318,   319,   321,   322,   323,   324,
-     325,   326,   327,   328,   329,   330,   333,   334,   335,   336,
-     339,   340,   341,   342,   343,   346,   347,   348,   349,   350,
-     351,   354,   355,   358,   359,   360,   361,   362,   363,   366,
-     367,   370,   371,   372,   374,   375,   376,   378,   379,   382,
-     383,   386,   387,   388,   389,   390,   393,   394,   395,   396,
-     397,   399,   400,   401,   402,   403,   405,   406,   407,   410,
-     411,   412,   413,   416,   417,   418,   419,   422,   423,   424,
-     425,   426
+     314,   315,   316,   317,   318,   319,   322,   323,   324,   325,
+     326,   327,   328,   329,   330,   331,   334,   335,   336,   337,
+     340,   341,   342,   343,   344,   347,   348,   349,   350,   351,
+     352,   355,   356,   359,   360,   361,   362,   363,   364,   367,
+     368,   371,   372,   373,   375,   376,   377,   379,   380,   383,
+     384,   387,   388,   389,   390,   391,   394,   395,   396,   397,
+     398,   400,   401,   402,   403,   404,   406,   407,   408,   411,
+     412,   413,   414,   417,   418,   419,   420,   423,   424,   425,
+     426,   427
 };
 #endif
 
@@ -1851,7 +1851,7 @@ yyreduce:
 
   case 52:
 #line 198 "syntaxique.y" /* yacc.c:1646  */
-    {printf("test\n");chain_local(&(yyvsp[-1].loc),&(yyvsp[0].loc));(yyval.loc)=(yyvsp[-1].loc);}
+    {chain_local(&(yyvsp[-1].loc),&(yyvsp[0].loc));(yyval.loc)=(yyvsp[-1].loc);}
 #line 1856 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1983,7 +1983,7 @@ yyreduce:
 
   case 80:
 #line 250 "syntaxique.y" /* yacc.c:1646  */
-    {init_local_type(&(yyval.loc));chain_decl_list((yyval.loc).declarations,(yyvsp[0].dop_list).declarations);insert_first_s_list(&(yyval.loc).ops,"begin");insert_s_list(&(yyval.loc).ops,"end");}
+    {init_local_type(&(yyval.loc));chain_decl_list((yyval.loc).declarations,(yyvsp[0].dop_list).declarations);insert_first_s_list(&(yyval.loc).ops,"begin");chain_s_list((yyval.loc).ops,(yyvsp[0].dop_list).ops.preop);insert_s_list(&(yyval.loc).ops,(yyvsp[0].dop_list).ops.op);chain_s_list((yyval.loc).ops,(yyvsp[0].dop_list).ops.postop);insert_s_list(&(yyval.loc).ops,"end");}
 #line 1988 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
@@ -2207,457 +2207,457 @@ yyreduce:
     break;
 
   case 116:
-#line 321 "syntaxique.y" /* yacc.c:1646  */
+#line 322 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));(yyval.op).op=concat((yyvsp[-2].op).op,(yyvsp[-1].opr).opr,(yyvsp[0].op).op,NULL);chain_s_list((yyval.op).preop,(yyvsp[-2].op).preop);chain_s_list((yyval.op).preop,(yyvsp[0].op).preop);chain_s_list((yyval.op).postop,(yyvsp[-2].op).postop);chain_s_list((yyval.op).postop,(yyvsp[0].op).postop);(yyval.op).simple=0;(yyval.op).conditional=(yyvsp[-1].opr).conditional||(yyvsp[-2].op).conditional||(yyvsp[0].op).conditional;}
 #line 2213 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 117:
-#line 322 "syntaxique.y" /* yacc.c:1646  */
+#line 323 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.op)=(yyvsp[-1].op);(yyval.op).op=concat("( ",(yyvsp[-1].op).op," )",NULL);}
 #line 2219 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 118:
-#line 323 "syntaxique.y" /* yacc.c:1646  */
+#line 324 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));(yyval.op).op=concat("not ",(yyvsp[0].op).op,NULL);insert_s_list(&(yyval.op).preop,(yyvsp[0].op).preop->op);insert_s_list(&(yyval.op).postop,(yyvsp[0].op).postop->op);}
 #line 2225 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 119:
-#line 324 "syntaxique.y" /* yacc.c:1646  */
+#line 325 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));(yyval.op).op=(yyvsp[0].code);(yyval.op).postop=NULL;(yyval.op).preop=NULL;(yyval.op).simple=0;}
 #line 2231 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 120:
-#line 325 "syntaxique.y" /* yacc.c:1646  */
+#line 326 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.op)=func_handler((yyvsp[0].op));(yyval.op).simple=0;}
 #line 2237 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 121:
-#line 326 "syntaxique.y" /* yacc.c:1646  */
+#line 327 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));insert_s_list(&(yyval.op).preop,concat((yyvsp[0].lval).id," := 1 + ",(yyvsp[0].lval).id,NULL));(yyval.op).op=strdup((yyvsp[0].lval).id);}
 #line 2243 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 122:
-#line 327 "syntaxique.y" /* yacc.c:1646  */
+#line 328 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));insert_s_list(&(yyval.op).preop,concat((yyvsp[0].lval).id," := 1 - ",(yyvsp[0].lval).id,NULL));(yyval.op).op=strdup((yyvsp[0].lval).id);}
 #line 2249 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 123:
-#line 328 "syntaxique.y" /* yacc.c:1646  */
+#line 329 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));insert_s_list(&(yyval.op).postop,concat((yyvsp[-1].lval).id," := 1 + ",(yyvsp[-1].lval).id,NULL));(yyval.op).op=strdup((yyvsp[-1].lval).id);}
 #line 2255 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 124:
-#line 329 "syntaxique.y" /* yacc.c:1646  */
+#line 330 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));insert_s_list(&(yyval.op).postop,concat((yyvsp[-1].lval).id," := 1 - ",(yyvsp[-1].lval).id,NULL));(yyval.op).op=strdup((yyvsp[-1].lval).id);}
 #line 2261 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 125:
-#line 330 "syntaxique.y" /* yacc.c:1646  */
+#line 331 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.op)=(yyvsp[0].op);}
 #line 2267 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 126:
-#line 333 "syntaxique.y" /* yacc.c:1646  */
+#line 334 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.opr).opr=(yyvsp[0].code);(yyval.opr).conditional=0;}
 #line 2273 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 127:
-#line 334 "syntaxique.y" /* yacc.c:1646  */
+#line 335 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.opr).opr=(yyvsp[0].code);(yyval.opr).conditional=1;}
 #line 2279 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 128:
-#line 335 "syntaxique.y" /* yacc.c:1646  */
+#line 336 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.opr).opr=(yyvsp[0].code);(yyval.opr).conditional=0;}
 #line 2285 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 129:
-#line 336 "syntaxique.y" /* yacc.c:1646  */
+#line 337 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.opr).opr=(yyvsp[0].code);(yyval.opr).conditional=0;}
 #line 2291 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 130:
-#line 339 "syntaxique.y" /* yacc.c:1646  */
+#line 340 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" - ";}
 #line 2297 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 131:
-#line 340 "syntaxique.y" /* yacc.c:1646  */
+#line 341 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" + ";}
 #line 2303 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 132:
-#line 341 "syntaxique.y" /* yacc.c:1646  */
+#line 342 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" * ";}
 #line 2309 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 133:
-#line 342 "syntaxique.y" /* yacc.c:1646  */
+#line 343 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" / ";}
 #line 2315 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 134:
-#line 343 "syntaxique.y" /* yacc.c:1646  */
+#line 344 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" mod ";}
 #line 2321 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 135:
-#line 346 "syntaxique.y" /* yacc.c:1646  */
+#line 347 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" = ";}
 #line 2327 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 136:
-#line 347 "syntaxique.y" /* yacc.c:1646  */
+#line 348 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" <> ";}
 #line 2333 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 137:
-#line 348 "syntaxique.y" /* yacc.c:1646  */
+#line 349 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" > ";}
 #line 2339 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 138:
-#line 349 "syntaxique.y" /* yacc.c:1646  */
+#line 350 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" < ";}
 #line 2345 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 139:
-#line 350 "syntaxique.y" /* yacc.c:1646  */
+#line 351 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" >= ";}
 #line 2351 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 140:
-#line 351 "syntaxique.y" /* yacc.c:1646  */
+#line 352 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" <= ";}
 #line 2357 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 141:
-#line 354 "syntaxique.y" /* yacc.c:1646  */
+#line 355 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" and ";}
 #line 2363 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 142:
-#line 355 "syntaxique.y" /* yacc.c:1646  */
+#line 356 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" or ";}
 #line 2369 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 143:
-#line 358 "syntaxique.y" /* yacc.c:1646  */
+#line 359 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" & ";}
 #line 2375 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 144:
-#line 359 "syntaxique.y" /* yacc.c:1646  */
+#line 360 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" | ";}
 #line 2381 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 145:
-#line 360 "syntaxique.y" /* yacc.c:1646  */
+#line 361 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" xor ";}
 #line 2387 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 146:
-#line 361 "syntaxique.y" /* yacc.c:1646  */
+#line 362 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" ~ ";}
 #line 2393 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 147:
-#line 362 "syntaxique.y" /* yacc.c:1646  */
+#line 363 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" shl ";}
 #line 2399 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 148:
-#line 363 "syntaxique.y" /* yacc.c:1646  */
+#line 364 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=" shr ";}
 #line 2405 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 149:
-#line 366 "syntaxique.y" /* yacc.c:1646  */
+#line 367 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.op)=(yyvsp[0].op);}
 #line 2411 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 150:
-#line 367 "syntaxique.y" /* yacc.c:1646  */
+#line 368 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));(yyval.op).op=generate_name_lval((yyvsp[0].lval));(yyval.op).postop=NULL;}
 #line 2417 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 151:
-#line 370 "syntaxique.y" /* yacc.c:1646  */
+#line 371 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));(yyval.op).op=concat("@",(yyvsp[0].code),NULL);(yyval.op).postop=NULL;}
 #line 2423 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 152:
-#line 371 "syntaxique.y" /* yacc.c:1646  */
+#line 372 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.op)=function_call_handler((yyvsp[-3].code),(yyvsp[-1].op_li));}
 #line 2429 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 153:
-#line 372 "syntaxique.y" /* yacc.c:1646  */
+#line 373 "syntaxique.y" /* yacc.c:1646  */
     {init_op_type(&(yyval.op));(yyval.op).op=concat((yyvsp[-2].code),"(",")",NULL);(yyval.op).postop=NULL;}
 #line 2435 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 154:
-#line 374 "syntaxique.y" /* yacc.c:1646  */
+#line 375 "syntaxique.y" /* yacc.c:1646  */
     {chain_op_list((yyvsp[-2].op_li),(yyvsp[0].op_li));}
 #line 2441 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 155:
-#line 375 "syntaxique.y" /* yacc.c:1646  */
+#line 376 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.op_li)=malloc(sizeof(op_list));(yyval.op_li)->ops=(yyvsp[0].op);(yyval.op_li)->next=NULL;}
 #line 2447 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 156:
-#line 376 "syntaxique.y" /* yacc.c:1646  */
+#line 377 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.op_li)=malloc(sizeof(op_list));(yyval.op_li)->ops=(yyvsp[0].op);(yyval.op_li)->next=NULL;}
 #line 2453 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 157:
-#line 378 "syntaxique.y" /* yacc.c:1646  */
+#line 379 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=concat((yyvsp[-2].code),".",(yyvsp[0].code),NULL);}
 #line 2459 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 158:
-#line 379 "syntaxique.y" /* yacc.c:1646  */
+#line 380 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=(yyvsp[0].code);}
 #line 2465 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 159:
-#line 382 "syntaxique.y" /* yacc.c:1646  */
+#line 383 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.ctr)=(yyvsp[0].ctr)+1;}
 #line 2471 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 160:
-#line 383 "syntaxique.y" /* yacc.c:1646  */
+#line 384 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.ctr)=1;}
 #line 2477 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 161:
-#line 386 "syntaxique.y" /* yacc.c:1646  */
+#line 387 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=strdup((yyvsp[0].code));}
 #line 2483 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 162:
-#line 387 "syntaxique.y" /* yacc.c:1646  */
+#line 388 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=strdup((yyvsp[0].code));}
 #line 2489 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 163:
-#line 388 "syntaxique.y" /* yacc.c:1646  */
+#line 389 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=strdup((yyvsp[0].code));}
 #line 2495 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 164:
-#line 389 "syntaxique.y" /* yacc.c:1646  */
+#line 390 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)=strdup((yyvsp[0].code));}
 #line 2501 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 165:
-#line 390 "syntaxique.y" /* yacc.c:1646  */
+#line 391 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)="nil";}
 #line 2507 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 166:
-#line 393 "syntaxique.y" /* yacc.c:1646  */
+#line 394 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).mod=(yyvsp[-1].modif);(yyval.rep)=add_type_rep((yyval.rep),(yyvsp[0].rep));}
 #line 2513 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 167:
-#line 394 "syntaxique.y" /* yacc.c:1646  */
+#line 395 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep)=(yyvsp[0].rep);(yyval.rep).b_type=strdup((yyvsp[-1].code));}
 #line 2519 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 168:
-#line 395 "syntaxique.y" /* yacc.c:1646  */
+#line 396 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).b_type=strdup((yyvsp[0].code));}
 #line 2525 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 169:
-#line 396 "syntaxique.y" /* yacc.c:1646  */
+#line 397 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).mod=(yyvsp[0].modif);}
 #line 2531 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 170:
-#line 397 "syntaxique.y" /* yacc.c:1646  */
+#line 398 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).vis=(yyvsp[-1].vis);(yyval.rep)=add_type_rep((yyval.rep),(yyvsp[0].rep));}
 #line 2537 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 171:
-#line 399 "syntaxique.y" /* yacc.c:1646  */
+#line 400 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).mod=(yyvsp[-1].modif);(yyval.rep)=add_type_rep((yyval.rep),(yyvsp[0].rep));}
 #line 2543 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 172:
-#line 400 "syntaxique.y" /* yacc.c:1646  */
+#line 401 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep)=(yyvsp[0].rep);(yyval.rep).b_type=strdup((yyvsp[-1].code));}
 #line 2549 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 173:
-#line 401 "syntaxique.y" /* yacc.c:1646  */
+#line 402 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).b_type=strdup((yyvsp[0].code));}
 #line 2555 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 174:
-#line 402 "syntaxique.y" /* yacc.c:1646  */
+#line 403 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).mod=(yyvsp[0].modif);}
 #line 2561 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 175:
-#line 403 "syntaxique.y" /* yacc.c:1646  */
+#line 404 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).vis=(yyvsp[-1].vis);(yyval.rep)=add_type_rep((yyval.rep),(yyvsp[0].rep));}
 #line 2567 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 176:
-#line 405 "syntaxique.y" /* yacc.c:1646  */
+#line 406 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).mod=(yyvsp[-1].modif);(yyval.rep)=add_type_rep((yyval.rep),(yyvsp[0].rep));}
 #line 2573 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 177:
-#line 406 "syntaxique.y" /* yacc.c:1646  */
+#line 407 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).vis=(yyvsp[-1].vis);(yyval.rep)=add_type_rep((yyval.rep),(yyvsp[0].rep));}
 #line 2579 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 178:
-#line 407 "syntaxique.y" /* yacc.c:1646  */
+#line 408 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.rep)=init_type_rep();(yyval.rep).mod=(yyvsp[0].modif);}
 #line 2585 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 179:
-#line 410 "syntaxique.y" /* yacc.c:1646  */
+#line 411 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.modif).nb_short=1; (yyval.modif).nb_long=0;(yyval.modif).sign=1;}
 #line 2591 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 180:
-#line 411 "syntaxique.y" /* yacc.c:1646  */
+#line 412 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.modif).nb_long=1; (yyval.modif).nb_short=0;(yyval.modif).sign=1;}
 #line 2597 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 181:
-#line 412 "syntaxique.y" /* yacc.c:1646  */
+#line 413 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.modif).sign=1;(yyval.modif).nb_long=0;(yyval.modif).nb_short=0;}
 #line 2603 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 182:
-#line 413 "syntaxique.y" /* yacc.c:1646  */
+#line 414 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.modif).sign=0;(yyval.modif).nb_long=0;(yyval.modif).nb_short=0;}
 #line 2609 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 183:
-#line 416 "syntaxique.y" /* yacc.c:1646  */
+#line 417 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.vis).nb_auto=1;}
 #line 2615 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 184:
-#line 417 "syntaxique.y" /* yacc.c:1646  */
+#line 418 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.vis).nb_register=1;}
 #line 2621 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 185:
-#line 418 "syntaxique.y" /* yacc.c:1646  */
+#line 419 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.vis).nb_static=1;}
 #line 2627 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 186:
-#line 419 "syntaxique.y" /* yacc.c:1646  */
+#line 420 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.vis).nb_extern=1;}
 #line 2633 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 187:
-#line 422 "syntaxique.y" /* yacc.c:1646  */
+#line 423 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)="int";}
 #line 2639 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 188:
-#line 423 "syntaxique.y" /* yacc.c:1646  */
+#line 424 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)="double";}
 #line 2645 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 189:
-#line 424 "syntaxique.y" /* yacc.c:1646  */
+#line 425 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)="float";}
 #line 2651 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 190:
-#line 425 "syntaxique.y" /* yacc.c:1646  */
+#line 426 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)="char";}
 #line 2657 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
 
   case 191:
-#line 426 "syntaxique.y" /* yacc.c:1646  */
+#line 427 "syntaxique.y" /* yacc.c:1646  */
     {(yyval.code)="void";}
 #line 2663 "syntaxique.tab.c" /* yacc.c:1646  */
     break;
@@ -2891,7 +2891,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 429 "syntaxique.y" /* yacc.c:1906  */
+#line 430 "syntaxique.y" /* yacc.c:1906  */
 
 
 char * convert_assignment(char * lvalue, int  ASSIGNMENTOP){
@@ -2990,6 +2990,20 @@ int init_lang (int argc,char *argv[]){
   return 1;
 }
 
+char * get_file_name(char *path){
+  char * res=strrchr(path,'/');
+  if(res!=NULL){
+    res+=1;
+    char * post=strrchr(path,'.');
+    if(post==NULL){
+      return NULL;
+    }
+    post[0]='\0';
+    return res;
+  }
+  return path;
+}
+
 int main(int argc, char *argv[]) {
   FILE *myfile = fopen(argv[1], "r");  //fichier a compiler
   out = fopen(argv[2], "w+");//ficher du resultat de la traduction
@@ -2999,11 +3013,16 @@ int main(int argc, char *argv[]) {
   }
 
   if (!myfile) {
-    printf("file not found");
+    printf("file not found\n");
     return -1;
   }
   yyin = myfile;
-
+  char * head=get_file_name(out_name);
+  if(head==NULL){
+    printf("Error, Wrong output file format.\n");
+    return -1;
+  }
+  fprintf(out,"program %s ;\n",head);
   yyparse();
   //print_id_list(id_table);
   fclose(myfile);

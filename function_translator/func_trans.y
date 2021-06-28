@@ -2,6 +2,7 @@
     #include <stdlib.h>
     #include <stdio.h>
     #include <string.h>
+    #include "../semantic_types.h"
     #include "func_trans.h"
     #include "semantic.h"
     #define YYERROR_VERBOSE
@@ -16,6 +17,7 @@
     void printError(int line,char* unexpected,char* expecting);
     extern int yyparse();
     extern int yylex();
+    op_list * args;
     char *res;
     extern FILE *xxin;
 
@@ -29,63 +31,54 @@
 
 %token <string> TEXT PC PD PE PF PI PO PS PU PX PP
 %token <string> SA SB SF SN SR ST SV SS END
-%type <string> FUNCTION
-%type  <func> SPECIALCHAR PARAMS INSIDEFORMAT FORMSPEC FORMATSTR
-
+%type  <string> FUNCTION SPECIALCHAR FORMSPEC FORMATSTR
+%type  <func> INSIDEFORMAT
 %start  CODE 
 %%
 CODE: 
-  |FUNCTION  ';'{res=$1;YYACCEPT;}
+  |FORMATSTR  {res=$1;YYACCEPT;}
 ;
 
-FUNCTION: TEXT '(' FORMATSTR ',' PARAMS ')' {$$=concat($1,"(",generate_result($3,$5),")",NULL);}
-  | TEXT '(' FORMATSTR ')' {$$=concat($1,"(",generate_result($3,NULL),");",NULL);}
-;
-
-FORMATSTR: '\'' INSIDEFORMAT '\'' {$$=$2;}
-;
-
-PARAMS: PARAMS ',' PARAMS {printf("params\n");chain_func_rep($1,$3);$$=$1;}
-  |'\'' TEXT '\'' {init_func_rep(&$$);$$->text=concat("' ",$2," '",NULL);$$->type=parameter;}
-  |TEXT  {init_func_rep(&$$);$$->text=$1;$$->type=parameter;}
+FORMATSTR: '\'' INSIDEFORMAT '\'' {$$=sprint_func($2," ,");}
 ;
 
 INSIDEFORMAT:INSIDEFORMAT INSIDEFORMAT {chain_func_rep($1,$2);$$=$1;}
-  |TEXT {init_func_rep(&$$);$$->text=$1;$$->type=simple_text;}
-  |','  {init_func_rep(&$$);$$->text=",";$$->type=simple_text;}
-  |FORMSPEC {$$=$1;}
-  |SPECIALCHAR {$$=$1;}
+  |TEXT {init_func_rep(&$$);$$->text=concat("'",$1,"'",NULL);$$->type=simple_text;}
+  |FORMSPEC {init_func_rep(&$$);$$->text=args->ops.op;args=args->next;$$->type=form_spec;}
+  |SPECIALCHAR {init_func_rep(&$$);$$->text=$1;$$->type=special_char;}
 ;
 
-FORMSPEC:PC {init_func_rep(&$$);$$->type=form_spec;}
-  |PD       {init_func_rep(&$$);$$->type=form_spec;}
-  |PE       {init_func_rep(&$$);$$->type=form_spec;}
-  |PF       {init_func_rep(&$$);$$->type=form_spec;}
-  |PI       {init_func_rep(&$$);$$->type=form_spec;}
-  |PO       {init_func_rep(&$$);$$->type=form_spec;}
-  |PS       {init_func_rep(&$$);$$->type=form_spec;}
-  |PU       {init_func_rep(&$$);$$->type=form_spec;}
-  |PX       {init_func_rep(&$$);$$->type=form_spec;}
-  |PP       {init_func_rep(&$$);$$->type=form_spec;}
+
+FORMSPEC:PC 
+  |PD       
+  |PE       
+  |PF       
+  |PI       
+  |PO       
+  |PS       
+  |PU       
+  |PX       
+  |PP       
 ;
 
-SPECIALCHAR:SA  {init_func_rep(&$$);$$->text="#7";$$->type=special_char;}
-  |SB           {init_func_rep(&$$);$$->text="#8";$$->type=special_char;}
-  |ST           {init_func_rep(&$$);$$->text="#9";$$->type=special_char;}
-  |SN           {init_func_rep(&$$);$$->text="#10";$$->type=special_char;}
-  |SV           {init_func_rep(&$$);$$->text="#11";$$->type=special_char;}
-  |SF           {init_func_rep(&$$);$$->text="#12";$$->type=special_char;}
-  |SR           {init_func_rep(&$$);$$->text="#13";$$->type=special_char;}
-  |SS           {init_func_rep(&$$);$$->text="\\\\";$$->type=simple_text;}
+SPECIALCHAR:SA  {$$="#7";}
+  |SB           {$$="#8";}
+  |ST           {$$="#9";}
+  |SN           {$$="#10";}
+  |SV           {$$="#11";}
+  |SF           {$$="#12";}
+  |SR           {$$="#13";}
+  |SS           {$$="\\\\";}
 ;
 
 %%
 
-char *generate_function(char * input){
-  YY_BUFFER_STATE buffer = xx_scan_string(input);
+char *generate_function(char * format,op_list *arg){
+  args=arg;
+  YY_BUFFER_STATE buffer = xx_scan_string(format);
   yyparse();
   xx_delete_buffer(buffer);
-  return res;
+  return concat("write( ",res," )",NULL);
 }
 void yyerror(const char *s) {
   printf("%s->\n",s);

@@ -32,15 +32,7 @@ char * get_n_in_func(func_rep *func,int n ){
     }
     return NULL;
 }
-void print_s_func(func_rep *format,char *separator){
-  func_rep *temp=format;
-  while(temp!=NULL){
-    if(temp->text!=NULL ){
-      printf("%s %s",temp->text,separator);
-    }
-    temp=temp->next;
-  }
-}
+
 
 void compact_func_list(func_rep *format){
   func_rep * temp =format;
@@ -57,11 +49,34 @@ void compact_func_list(func_rep *format){
     }
   }
 }
+void print_s_func(func_rep *format,char *separator){
+  func_rep *temp=format;
+  while(temp!=NULL){
+    if(temp->text!=NULL){
+      printf("%s %s",temp->text,separator);
+    }
+    temp=temp->next;
+  }
+}
+char * sprint_func(func_rep *format,char *separator){
+  compact_func_list(format);
+  func_rep *temp=format;
+  char *res="";
+  while(temp->next!=NULL ){
+    if(temp->text!=NULL ){
+      res=concat(res,temp->text,separator,NULL);
+      //printf("%s %s",temp->text,separator);
+    }
+    temp=temp->next;
+  }
+    res=concat(res,temp->text,NULL);
+  return res;
+}
+
 char * generate_result(func_rep *format,func_rep *param){
     char *res="";
     func_rep * temp =format;
     compact_func_list(format);
-    printf("rr\n");
     int pos=0;
     while (temp!=NULL){
         if(temp->type==form_spec){
